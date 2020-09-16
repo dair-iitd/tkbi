@@ -2,6 +2,7 @@
 This project contains Pytorch implementation of Temporal Knowledge Base Completion (TKBC) models [1]. The code has been developed at Indian Institute of Technology, Delhi (IIT Delhi). The TKBI models in this repository are trained over structured temporal knowledge bases like WIKIDATA12k, YAGO11k, ICEWS05-15, and ICEWS14. You can also add your own KB seamlessly.
 
 [1] "[Temporal Knowledge Base Completion: New Algorithms and Evaluation Protocols](https://arxiv.org/abs/2005.05035)" Jain, Prachi*, Sushant Rathi*, Mausam and Soumen Chakrabarti. EMNLP 2020.
+
 (* equal contribution)
 
 # Requirements
