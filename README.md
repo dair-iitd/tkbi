@@ -78,7 +78,7 @@ Link Prediction scores:
 ![Image-link-prediction-performance](https://github.com/dair-iitd/tkbi/blob/master/images/Link_scores.png?raw=true)
 
 Time-interval prediction scores:
-![Image-time-interval-prediction-performance](https://github.com/dair-iitd/tkbi/blob/master/images/pairwiseTime_scores.png?raw=true)
+![Image-time-interval-prediction-performance](https://github.com/dair-iitd/tkbi/blob/master/images/Time_scores.png?raw=true)
 
 
 
