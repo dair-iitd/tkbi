@@ -64,8 +64,14 @@ python main.py -d icews05-15 -m TimePlex --resume_from_save "./models/icews05-15
 
 ## ICEWS14
 python main.py -d icews14 -m TimePlex --resume_from_save "./models/icews14_timeplex/best_valid_model.pt"  --mode test --filter_method time-str -y 40 --flag_add_reverse 1 
+```
 
 
+# Results
+Link Prediction scores:
+![Image-link-prediction-performance](https://github.com/dair-iitd/tkbi/tree/master/pairwise/Link_scores.png)
+Time-interval prediction scores:
+![Image-time-interval-prediction-performance](https://github.com/dair-iitd/tkbi/tree/master/pairwiseTime_scores.png)
 
 
 
