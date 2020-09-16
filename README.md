@@ -75,9 +75,10 @@ python main.py -d icews14 -m TimePlex --resume_from_save "./models/icews14_timep
 
 # Results
 Link Prediction scores:
-![Image-link-prediction-performance](https://github.com/dair-iitd/tkbi/tree/master/pairwise/Link_scores.png)
+![Image-link-prediction-performance](https://github.com/dair-iitd/tkbi/blob/master/images/Link_scores.png?raw=true)
+
 Time-interval prediction scores:
-![Image-time-interval-prediction-performance](https://github.com/dair-iitd/tkbi/tree/master/pairwiseTime_scores.png)
+![Image-time-interval-prediction-performance](https://github.com/dair-iitd/tkbi/blob/master/images/pairwiseTime_scores.png?raw=true)
 
 
 
