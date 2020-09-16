@@ -69,4 +69,3 @@ python main.py -d icews14 -m TimePlex --resume_from_save "./models/icews14_timep
 
 
 
-
