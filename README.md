@@ -3,7 +3,9 @@ This project contains Pytorch implementation of Temporal Knowledge Base Completi
 
 [1] "[Temporal Knowledge Base Completion: New Algorithms and Evaluation Protocols](https://arxiv.org/abs/2005.05035)" Jain, Prachi*, Sushant Rathi*, Mausam and Soumen Chakrabarti. EMNLP 2020.
 
-(* equal contribution)
+* equal contribution
+
+Updated version to be uploaded soon.
 
 # Requirements
 ```
