@@ -60,9 +60,6 @@ def compute_interval_scores(valid_time_scores_dict, test_time_scores_dict, save_
     id_year_map_dict = {}
     for i, j in enumerate(id_year_map):
         id_year_map_dict[i] = j
-    # print(id_year_map_dict)
-    # for i, j in zip(t_gold_min[:5], t_gold_max[:5]):
-    #     print("gold start:{}, gold end:{}".format(i, j))
 
     # ----------------------#
     print("**************")
@@ -75,8 +72,6 @@ def compute_interval_scores(valid_time_scores_dict, test_time_scores_dict, save_
 
     for score_to_compute in score_func.keys():
         print("\nScore:{}".format(score_to_compute))
-        # iou_scores= compute_scores(ktrain, facts, t_scores, method=method, durations=durations,
-        # 			  score_func=score_func[score_to_compute], use_time_interval=use_time_interval, topk_ranks=topk_ranks)
         iou_scores = compute_scores(id_year_map, facts, t_gold_min, t_gold_max, t_scores, method=method,
                                     thresholds=thresholds,
                                     score_func=score_func[score_to_compute], topk_ranks=topk_ranks)
@@ -86,7 +81,6 @@ def compute_interval_scores(valid_time_scores_dict, test_time_scores_dict, save_
 
         for i in iouatk:
             all_scores = torch.stack(iou_scores[:i])
-            #     print("all_scores shape:",all_scores.shape)
             best_scores, _ = torch.max(all_scores, 0)
 
             scores_dict[(i, score_to_compute)] = best_scores
@@ -132,15 +126,11 @@ def get_time_scores(scoring_function, test_kb, method='greedy-coalescing', load_
 
             start_bin = fact[3 + time_index["t_s_orig"]]
 
-            # start_bin, end_bin=fact[3:5]
-
-            # num_times=end_bin-start_bin+1
             num_times = 2
 
             if num_times > 1:
                 t = numpy.arange(start_bin, start_bin + 2)
 
-                # t=numpy.arange(start_bin, end_bin+1)
             else:
                 num_times += 1
                 # to avoid batch size of 1
@@ -172,14 +162,11 @@ def get_time_scores(scoring_function, test_kb, method='greedy-coalescing', load_
                 t = torch.autograd.Variable(torch.from_numpy(
                     t).unsqueeze(1), requires_grad=False)
 
-            # print(facts[i],facts_track_range, i,s.shape, facts_time_chunk, len(numpy.nonzero(facts_track_range==i)))
-
             scores_t = scoring_function(s, r, o, None).data
 
             # save for later (all scores_t are same pick any one)
             scores_t_list.append(scores_t[-1])
 
-        # scores_t_pickle=torch.tensor(scores_t_pickle)
         t = torch.from_numpy(facts[:, 3:]).unsqueeze(1)
 
         data_pickle = prepare_data_iou_scores(
@@ -271,7 +258,6 @@ if __name__ == '__main__':
     parser.add_argument('--save_scores', default=0, type=int)  # need for greedy coalescing
     parser.add_argument('--save_text', default="", type=str, help="filename prefix for time scores pickle")
 
-    # parser.add_argument('--method', help="scores file path", required=True)
     arguments = parser.parse_args()
 
     test_pickle = {}

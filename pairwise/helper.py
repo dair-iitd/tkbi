@@ -105,8 +105,6 @@ def min_max_thresholds(facts, t1_map, t2_map, num_relations, population=90, min_
     for fact in facts:
         s, r, o = fact[:3]
         t = fact[3:]
-        # date = check_date_validity(time_mat[t["t_i"]])
-        # if date >= 0:
 
         date_t1 = t1_map[t[time_index["t_i"]]]
         date_t2 = t2_map[t[time_index["t_i"]]]
@@ -133,15 +131,11 @@ def min_max_thresholds(facts, t1_map, t2_map, num_relations, population=90, min_
     for i in range(num_relations):
         for j in range(num_relations):
             minn, maxx, sup = r_r_stat.get((i, j), (-inf, inf, 0))
-            # minn, maxx, sup=r_r_stat.get((i,j),(inf, -inf,0))
 
             if sup >= min_support:
-                # print("r1:{}, r2:{}, min:{}, max:{}".format(i,j,minn,maxx))
                 min_r_r[i, j] = minn
                 max_r_r[i, j] = maxx
             else:
-                # min_r_r[i,j]=inf
-                # max_r_r[i,j]=-inf
                 min_r_r[i, j] = -inf
                 max_r_r[i, j] = inf
 
@@ -164,7 +158,6 @@ def mean_variance(facts, t1_map, t2_map, num_relations, min_support=10, mode='su
     var_r_r:[r x r] where r is the number of relations, var_r_r[i,j] denotes the variance in time difference of i
             and j (e.i.t- e.j.t)
     '''
-    # time_mat = time_mat.squeeze()
     t1_map = t1_map.squeeze()
     t2_map = t2_map.squeeze()
 
@@ -174,8 +167,6 @@ def mean_variance(facts, t1_map, t2_map, num_relations, min_support=10, mode='su
     for fact in facts:
         s, r, o = fact[:3]
         t = fact[3:]
-        # date = check_date_validity(time_mat[t["t_i"]])
-        # if date >= 0:
 
         date_t1 = t1_map[t[time_index["t_i"]]]
         date_t2 = t2_map[t[time_index["t_i"]]]
@@ -210,15 +201,11 @@ def mean_variance(facts, t1_map, t2_map, num_relations, min_support=10, mode='su
             mean, var, sup = r_r_stat.get((i, j), (-inf, min_var, 0))
 
             var = max(var, min_var)
-            # minn, maxx, sup=r_r_stat.get((i,j),(inf, -inf,0))
 
             if sup >= min_support:
                 mean_r_r[i, j] = mean
                 var_r_r[i, j] = var
             else:
-                # min_r_r[i,j]=inf
-                # max_r_r[i,j]=-inf
-
                 mean_r_r[i, j] = -inf
                 var_r_r[i, j] = min_var
 
@@ -255,8 +242,6 @@ def recurring_mean_variance(facts, t_map, num_relations, min_support=10, mode='s
     for fact in facts:
         s, r, o = fact[:3]
         t = fact[3:]
-        # date = check_date_validity(time_mat[t["t_i"]])
-        # if date >= 0:
 
         date = t_map[t[time_index["t_i"]]]
 
@@ -278,7 +263,6 @@ def recurring_mean_variance(facts, t_map, num_relations, min_support=10, mode='s
         r_stat[r] = (numpy.mean(data), numpy.var(data), len(data))
 
     print("r_stats:", r_stat)
-    # pdb.set_trace()
 
     mean_r = torch.zeros(num_relations)
     var_r = torch.zeros(num_relations)
@@ -289,15 +273,11 @@ def recurring_mean_variance(facts, t_map, num_relations, min_support=10, mode='s
         mean, var, sup = r_stat.get(i, (-inf, 0.01, 0))
 
         var = max(var, 0.01)
-        # minn, maxx, sup=r_r_stat.get((i,j),(inf, -inf,0))
 
         if sup >= min_support:
             mean_r[i] = mean
             var_r[i] = var
         else:
-            # min_r_r[i,j]=inf
-            # max_r_r[i,j]=-inf
-
             mean_r[i] = -inf
             var_r[i] = 0.01
 
@@ -331,8 +311,6 @@ def recurring_relation_mean_variance(facts, t_map, num_relations, min_support=10
     for fact in facts:
         s, r, o = fact[:3]
         t = fact[3:]
-        # date = check_date_validity(time_mat[t["t_i"]])
-        # if date >= 0:
 
         date = t_map[t[time_index["t_i"]]]
 
@@ -354,7 +332,6 @@ def recurring_relation_mean_variance(facts, t_map, num_relations, min_support=10
     r_stat = {}
     for r in r_diffs:
         data = r_diffs[r]
-        # if len(data) > 10:
         r_stat[r] = (numpy.mean(data), numpy.var(data), len(data))
 
     print("r_stats:", r_stat)
@@ -368,15 +345,11 @@ def recurring_relation_mean_variance(facts, t_map, num_relations, min_support=10
         mean, var, sup = r_stat.get(i, (-inf, 0.01, 0))
 
         var = max(var, 0.01)
-        # minn, maxx, sup=r_r_stat.get((i,j),(inf, -inf,0))
 
         if sup >= min_support:
             mean_r[i] = mean
             var_r[i] = var
         else:
-            # min_r_r[i,j]=inf
-            # max_r_r[i,j]=-inf
-
             mean_r[i] = -inf
             var_r[i] = 0.01
 

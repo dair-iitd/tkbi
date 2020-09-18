@@ -39,11 +39,9 @@ def get_gold_year_interval(t, id2_time_str, id_year_map, load_to_gpu=True):
     assert (t.shape[-1] == len(time_index))
     t_str = t[:, :, time_index["t_str"]]
 
-    # pdb.set_trace()
 
     t_gold_min = []
     t_gold_max = []
-    # ipdb.set_trace()
     for ele in t_str:
         t_gold_min_ele, t_gold_max_ele = id2_time_str[ele[0].item()].split(
             "\t")
@@ -57,20 +55,16 @@ def get_gold_year_interval(t, id2_time_str, id_year_map, load_to_gpu=True):
 
 
 def prepare_data_iou_scores(t, test_kb, scores_t="", load_to_gpu=True):
-    ##
-    # pdb.set_trace()
     if not test_kb.datamap.use_time_interval:
         id_year_map = func_load_to_gpu(torch.from_numpy(
             test_kb.datamap.id2dateYear_mat), load_to_gpu)
     else:
         id_year_map = func_load_to_gpu(torch.from_numpy(
             test_kb.datamap.binId2year_mat), load_to_gpu)
-    ##
 
     id2_time_str = test_kb.datamap.id2TimeStr
 
     # ---final IOU score computation, extract gold time intervals from KB first---#
-
     t_gold_min, t_gold_max = get_gold_year_interval(
         t, id2_time_str, id_year_map, load_to_gpu=load_to_gpu)
     # ------------------------------------------#
@@ -106,9 +100,7 @@ def load_pickle(scores_t_dict):
 
     print("Gold times shape- start: {}, end: {}".format(t_gold_min.shape, t_gold_max.shape))
     print("dataset_root:{}".format(dataset_root))
-    # print("Loaded t_scores and facts from {}".format(scores_t_file))
 
-    # t_scores=t_scores.cpu().float()
     if duration_scores is not None:
         duration_scores = duration_scores.cpu().float()
 
@@ -160,7 +152,6 @@ def get_thresholds(scores_t, valid_facts, test_facts, aggr='mean', verbose=False
     rel_interval_len = defaultdict(list)
 
     probs = torch.nn.functional.softmax(scores_t, dim=-1)
-    # print("Probabilities shape:", probs.shape)
 
     for idx, fact in enumerate(valid_facts):
         s, r, o = fact[:3]
@@ -177,7 +168,6 @@ def get_thresholds(scores_t, valid_facts, test_facts, aggr='mean', verbose=False
 
     print(valid_facts.shape)
 
-    # print("Num relations:", len(rel_prob_list))
 
     rel_thresh = {}
 
@@ -190,23 +180,10 @@ def get_thresholds(scores_t, valid_facts, test_facts, aggr='mean', verbose=False
         else:
             raise Exception('Unknown aggregate {} for thresholds'.format(aggr))
 
-    '''
-    if(verbose):
-        print("\nRelations thresholds:")
-        for key,val in rel_thresh.items():
-            print(key,val)
-            print(id2rel[ktrain.reverse_relation_map[key]])
-            print(numpy.mean(numpy.array(rel_interval_len[key])), numpy.std(numpy.array(rel_interval_len[key])), numpy.median(numpy.array(rel_interval_len[key])))
-            print("Freq:",len(rel_interval_len[key]))
-    
-            print('\n')
-    '''
-
     thresholds = torch.zeros(len(test_facts))
 
     thresh_list = [i for _, i in rel_thresh.items()]
     mean_thresh = sum(thresh_list) / len(thresh_list)
-    # print("Mean threshold:{}\n".format(mean_thresh))
 
     for idx, fact in enumerate(test_facts):
         r = fact[1]

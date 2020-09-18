@@ -183,7 +183,6 @@ class Gadget(torch.nn.Module):
     def forward(self, s, r, o, t):
 
         if t is None:  # time prediction
-            # pdb.set_trace()
             batch_size = len(s)
             num_times = len(self.times)
 
@@ -191,7 +190,6 @@ class Gadget(torch.nn.Module):
             r = r.repeat(1, num_times).flatten()
             o = o.repeat(1, num_times).flatten()
 
-            # pdb.set_trace()
             t = (self.times).float()
             t = t.repeat(batch_size)
 
@@ -208,15 +206,11 @@ class Gadget(torch.nn.Module):
         elif s is None:  # scores over all entities
             batch_size = len(o)
 
-            # s = func_load_to_gpu((torch.arange(self.entity_count)).repeat(batch_size), self.load_to_gpu)
-            # s = (torch.arange(self.entity_count)).repeat(batch_size)
             s = self.eval_ids[:batch_size * self.entity_count]
 
             o = func_load_to_gpu(torch.from_numpy(o.cpu().numpy().repeat(self.entity_count)), self.load_to_gpu)
             r = func_load_to_gpu(torch.from_numpy(r.cpu().numpy().repeat(self.entity_count)), self.load_to_gpu)
             t = func_load_to_gpu(torch.from_numpy(t.cpu().numpy().repeat(self.entity_count, axis=0)), self.load_to_gpu)
-
-            # print("s shape:{}, r shape:{}, o shape:{}, t shape:{}".format(s.shape, r.shape, o.shape, t.shape))
 
             sub_scores = self.compute_scores(s, r, o, t, mode='subject', eval=True)
 
@@ -231,8 +225,6 @@ class Gadget(torch.nn.Module):
         elif o is None:  # scores over all entities
             batch_size = len(s)
 
-            # o = func_load_to_gpu((torch.arange(self.entity_count)).repeat(batch_size), self.load_to_gpu)
-            # o = (torch.arange(self.entity_count)).repeat(batch_size)
             o = self.eval_ids[:batch_size * self.entity_count]
 
             s = func_load_to_gpu(torch.from_numpy(s.cpu().numpy().repeat(self.entity_count)), self.load_to_gpu)
@@ -256,11 +248,6 @@ class Gadget(torch.nn.Module):
             t = func_load_to_gpu(torch.from_numpy(t.cpu().numpy().repeat(num_neg_samples, axis=0)), self.load_to_gpu)
 
             s = torch.flatten(s)
-
-            # print("s:", s)
-            # print("o:", o)
-
-            # print("s shape:{}, r shape:{}, o shape:{}, t shape:{}".format(s.shape, r.shape, o.shape, t.shape))
 
             sub_scores = self.compute_scores(s, r, o, t, mode='subject')
 
@@ -291,9 +278,6 @@ class Gadget(torch.nn.Module):
             scores = scores.reshape((batch_size, num_neg_samples))
 
         else:  # positive samples for s
-            # print("s shape:{}, r shape:{}, o shape:{}, t shape:{}".format(s.shape, r.shape, o.shape, t.shape))
-            # pdb.set_trace()
-
             sub_scores = self.compute_scores(s, r, o, t, mode='subject', positive_samples=True)
 
             if self.use_obj_scores:
@@ -427,16 +411,12 @@ class Pairs(Gadget):
             # --compute scores for neighbourhood of s--#
             entities = s
             nbors = o
-            #U2_scoring_gadget = self.U2_scoring_gadget[mode]
-            #pairwise_scoring_gadget = self.pairwise_scoring_gadget[mode]
             weights = self.W_sub
 
         elif mode == 'object':
             # --compute scores for neighbourhood of o--#
             entities = o
             nbors = s
-            #U2_scoring_gadget = self.U2_scoring_gadget[mode]
-            #pairwise_scoring_gadget = self.pairwise_scoring_gadget[mode]
             weights = self.W_obj
 
         else:
@@ -450,8 +430,6 @@ class Pairs(Gadget):
                 filter = (r, nbors, t)
                 # pass
             entity_nbors, indices = self.get_nbors_indices(entities, mode=mode, filter=filter)
-            # if positive_samples:
-            #     pdb.set_trace()
         else:
             entity_nbors, indices = self.eval_tensors[mode]  # use pre-constructed tensors
 
@@ -467,13 +445,6 @@ class Pairs(Gadget):
         r_repeated = r[indices]  # torch.index_select(r, 0, indices)
         e_repeated = nbors[indices]  # torch.index_select(r, 0, indices)
 
-        # print("t after repeating:{}, r after repeating:{}".format(t_repeated.shape, r_repeated.shape))
-
-        # compute time diff
-        # time_idx = time_index["t_s"]  # pick exact year instead of bin?
-        # r_time = entity_nbors[:, 2 + time_idx]
-        # query_time = t_repeated[:, time_idx]
-
         time_idx = time_index["t_i"]  # pick start year from time interval id
         r_time = self.t1_emb(entity_nbors[:, 2 + time_idx])
 
@@ -482,17 +453,9 @@ class Pairs(Gadget):
         else:
             query_time = t_repeated.unsqueeze(1)
 
-        # pdb.set_trace()
-
-
-        # print("r_time shape:{}, query_time:{}".format(r_time.shape, query_time.shape))
-        # print(query_time)
-        # print(time_diff)
-
         # we have all features! Now compute scores (N scores)
         # features are- r_query, r_link, diff, entity
         nbor_index = {"r": 0, "e": 1, "t": 2}
-        # print("Computing scores")
         r_query = r_repeated
         r_link = entity_nbors[:, nbor_index["r"]]
         e_query = e_repeated
@@ -516,7 +479,6 @@ class Pairs(Gadget):
         wt_sum = wt_sum.index_add(0, indices, wt)
         wt_sum = wt_sum[indices]
         wt = wt / (wt_sum.squeeze())
-        # print("Computed weights with softmax")
         # '''
         
 
@@ -529,17 +491,11 @@ class Pairs(Gadget):
 
         return final_scores
 
-    # def regularizer(self, s, r, o, t):
-    #     return self.reg_wt*(self.scoring_gadget['subject'].regularizer() + self.scoring_gadget['object'].regularizer() + 
-    #             self.W_sub**2 + self.W_obj**2)
-
 
 class Recurrent(Gadget):
     def __init__(self, train_kb, entity_count, relation_count, load_to_gpu=True, 
             eval_batch_size=10, use_obj_scores=False, reg_wt = 0.0, **kwargs):
         
-        # pdb.set_trace()
-
         ## gadget specific args
         self.scoring_gadget_type = kwargs.get('scoring_gadget_type', 'gaussian')
         self.trainable = kwargs.get('trainable', True)
@@ -611,8 +567,6 @@ class Recurrent(Gadget):
                 filter = (r, nbors, t)
                 # pass
             entity_nbors, indices = self.get_nbors_indices(entities, mode=mode, filter=filter)
-            # if positive_samples:
-            #     pdb.set_trace()
         else:
             entity_nbors, indices = self.eval_tensors[mode]  # use pre-constructed tensors
 
@@ -624,16 +578,9 @@ class Recurrent(Gadget):
 
 
         # use indices to repeat t and r appropriate number of times
-        t_repeated = t[indices]  # torch.index_select(t, 0, indices)
-        r_repeated = r[indices]  # torch.index_select(r, 0, indices)
-        e_repeated = nbors[indices]  # torch.index_select(r, 0, indices)
-
-        # print("t after repeating:{}, r after repeating:{}".format(t_repeated.shape, r_repeated.shape))
-
-        # compute time diff
-        # time_idx = time_index["t_s"]  # pick exact year instead of bin?
-        # r_time = entity_nbors[:, 2 + time_idx]
-        # query_time = t_repeated[:, time_idx]
+        t_repeated = t[indices]  
+        r_repeated = r[indices]  
+        e_repeated = nbors[indices]  
 
         time_idx = time_index["t_i"]  # pick start year from time interval id
         r_time = self.t1_emb(entity_nbors[:, 2 + time_idx])
@@ -647,14 +594,10 @@ class Recurrent(Gadget):
 
         time_diff = r_time - query_time
 
-        # print("r_time shape:{}, query_time:{}".format(r_time.shape, query_time.shape))
-        # print(query_time)
-        # print(time_diff)
 
         # we have all features! Now compute scores (N scores)
         # features are- r_query, r_link, diff, entity
         nbor_index = {"r": 0, "e": 1, "t": 2}
-        # print("Computing scores")
         r_query = r_repeated
         r_link = entity_nbors[:, nbor_index["r"]]
         e_query = e_repeated
@@ -664,14 +607,9 @@ class Recurrent(Gadget):
 
         # 1 if same r,e seen at different time (time_diff is non-zero)
 
-        # if self.gadget_type == 'recurring-fact':
         repeated_fact = (r_link == r_query) & (e_link == e_query) & (time_diff != 0).squeeze()
-        # elif self.gadget_type == 'recurring-relation':
-        #     repeated_fact = (r_link == r_query) & (time_diff != 0).squeeze()
 
         repeated_fact = repeated_fact.float()
-
-        # pdb.set_trace()
 
         # compress query_fact into binary tensor of length num_samples,
         # with 1 for the sample which has at least one repeated fact.

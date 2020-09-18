@@ -931,21 +931,16 @@ def evaluate(name, ranker, kb, batch_size, predict_time=0, predict_time_pair=0, 
             "mrr": 0, "mr": 0, "hits10": 0, "hits1": 0}, "t": {"mrr": 0, "mr": 0, "hits10": 0, "hits1": 0},
               "tp": {"mrr": 0, "mr": 0, "hits10": 0, "hits1": 0, "iou": 0}}
     start_time = time.time()
-    facts = kb.facts  # [:50]
-    # print("ALERT!!:399: All facts not evaluated!!!!!!")
+    facts = kb.facts  
     if verbose > 0:
         totals["correct_type"] = {"e1": 0, "e2": 0}
-        # CPU mode
-        # entity_type_matrix = kb.entity_type_matrix
         for hook in hooks:
             hook.begin()
 
-    # rel_wise_perf=dd(lambda:[])
 
     valid_list = []
     ranks_head, ranks_tail, ranks_rel = [], [], []
     top5_tail, top5_head, top3_rel = [], [], []
-    # predict_rel=False
 
     # --pickle for testing--#
     scores_t_pickle = []
@@ -955,7 +950,6 @@ def evaluate(name, ranker, kb, batch_size, predict_time=0, predict_time_pair=0, 
         # break
 
         start = i
-        # end = min(i+batch_size, 100+facts.shape[0])
         end = min(i + batch_size, facts.shape[0])
 
         s = facts[start:end, 0]
@@ -964,16 +958,10 @@ def evaluate(name, ranker, kb, batch_size, predict_time=0, predict_time_pair=0, 
 
         if len(kb.facts_time_tokens) == 0:
             t = facts[start:end, 3:]
-            # if(kb.use_time_interval):
-            #     t = facts[start:end, -1] #only time interval id
-            # else:
-            #     t=  facts[start:end,3:5]  #start bin & end bin only
-
         else:
             t = kb.facts_time_tokens[start:end]  # for TA-x models
 
         t_ids = facts[start:end, 3:]
-        # print("t_ids shape:",t_ids.shape)
 
 
         if load_to_gpu:
@@ -1023,32 +1011,6 @@ def evaluate(name, ranker, kb, batch_size, predict_time=0, predict_time_pair=0, 
             ranks_s = ranker.filtered_ranks(start, end, scores_s, score_of_expected_s, predict='s', load_to_gpu=load_to_gpu)
             
 
-        # ranks_s, scores_s, score_of_expected_s = ranker.forward_with_e1_temporal_filter(s, r, o, t, knowns_s,
-        # start, end)
-
-        '''
-        raw_ranks=ranks_s
-        ranks_s, scores_s, score_of_expected_s = ranker.forward_with_e1_temporal_filter(s, r, o, t, knowns_s, start, end)
-        imp_cnt=0
-        worse_cnt=0
-        for i in range(len(ranks_s)):
-            # print("Fact:",start+i)
-            # print(len(set(list(ranker.e1_incompat[start+i]))))
-            rel_wise_cnt[int(r[i][0])].append(0)
-            if(ranks_s[i]<raw_ranks[i]):
-                # print("Improved rank:{}, old rank:{}".format(ranks_s[i],raw_ranks[i]))
-                rel_wise_imp[int(r[i][0]) ].append((ranks_s[i].item(),raw_ranks[i].item()))
-                imp_cnt+=1
-            elif(ranks_s[i]>raw_ranks[i]):
-                # print("Worsened rank:{}, old rank:{}".format(ranks_s[i],raw_ranks[i]))
-                worse_cnt+=1
-            # xx=input()
-
-
-        # print("\nTotal ranks improved:",imp_cnt)
-        # print("Total ranks worsened:",worse_cnt)
-        # xx=input()
-        '''
         if predict_rel:
             scores_r, score_of_expected_r = ranker.forward(
                 s, r, o, t, flag_r=1, load_to_gpu=load_to_gpu)
@@ -1066,7 +1028,6 @@ def evaluate(name, ranker, kb, batch_size, predict_time=0, predict_time_pair=0, 
             else:
                 raise Exception(
                     "Predict time pair not supported for expand_mode {}".format(ranker.expand_mode))
-                # score_from_model = ranker.scoring_function(s, r, o, None) #returns tuple of start/end scores
             # save scores for pickling later
             scores_t_pickle.append(score_from_model)
 
@@ -1089,7 +1050,6 @@ def evaluate(name, ranker, kb, batch_size, predict_time=0, predict_time_pair=0, 
         totals['m']['hits1'] += (ranks_s.eq(1).float().sum() +
                                  ranks_o.eq(1).float().sum()) / 2.0
 
-        # print("HITS@10:",totals['m']['hits10'])
 
         # '''
         num_facts = len(s)
@@ -1099,9 +1059,6 @@ def evaluate(name, ranker, kb, batch_size, predict_time=0, predict_time_pair=0, 
         scores_o_np = scores_o.data.cpu().numpy()
         score_of_expected_o_np = score_of_expected_o.data.cpu().numpy()
 
-        # rem = ranker.all_kb.datamap.reverse_entity_map
-        # rrm = ranker.all_kb.datamap.reverse_relation_map
-        # rtm = ranker.all_kb.datamap.id2TimeStr
         rem = kb.datamap.reverse_entity_map
         rrm = kb.datamap.reverse_relation_map
         rtm = kb.datamap.id2TimeStr
@@ -1112,9 +1069,6 @@ def evaluate(name, ranker, kb, batch_size, predict_time=0, predict_time_pair=0, 
             valid_list.append(
                 (rem[s_val], rrm[r_val], rem[o_val], rtm[t_ids[i][-2].item()]))
 
-            # if('<OOV>' in valid_list[-1]):
-            #     print(valid_list[-1])
-            #     xx=input()
 
             ranks_head.append(ranks_s[i].item())
             ranks_tail.append(ranks_o[i].item())
@@ -1148,10 +1102,6 @@ def evaluate(name, ranker, kb, batch_size, predict_time=0, predict_time_pair=0, 
                 ), r[i][0].item(), o[i][0].item()
                 valid_list.append(
                     (rem[s_val], rrm[r_val], rem[o_val], rtm[t_ids[i].item()]))
-
-                # if('<OOV>' in valid_list[-1]):
-                #     print(valid_list[-1])
-                #     xx=input()
 
                 ranks_rel.append(ranks_r[i].item())
 

@@ -34,9 +34,6 @@ def greedy_coalescing(probs, thresholds, k=1):
 
             thresh = thresholds[i]
 
-            # print("\ntot:{}, thresh:{}".format(tot,thresh))
-
-            # print("Initial:",left,right)
             while tot < thresh and (left > 0 or right < num_times - 1):
                 next_index = -1
                 if (left == 0):
@@ -48,7 +45,6 @@ def greedy_coalescing(probs, thresholds, k=1):
                 else:
                     left_score = probs[i, left - 1]
                     right_score = probs[i, right + 1]
-                    # print("left_score:{}, right_score:{}".format(left_score,right_score))
 
                     if (left_score > right_score):
                         left -= 1
@@ -59,14 +55,8 @@ def greedy_coalescing(probs, thresholds, k=1):
 
                 tot += probs[i, next_index]
 
-            # print("pred_min shape:",pred_min.shape)
-            # print("indices shape:",indices.shape)
             pred_min[i, idx] = left
             pred_max[i, idx] = right
-
-        # print("Later:",left,right)
-
-    # print("{}/{} done".format(i,batch_size))
 
     return pred_min, pred_max
 
@@ -85,7 +75,6 @@ def greedy_coalescing_durations(probs, durations, k=1):
     batch_size = len(probs)
     num_times = probs.shape[-1]
 
-    # _,best_indices= torch.max(probs,-1)
     indices = torch.argsort(probs, descending=True)[:, :k]
 
     pred_min = torch.zeros(batch_size, k)
@@ -99,9 +88,6 @@ def greedy_coalescing_durations(probs, durations, k=1):
 
             duration = durations[i]
 
-            # print("\ntot:{}, thresh:{}".format(tot,thresh))
-
-            # print("Initial:",left,right)
             while span <= duration and (left > 0 or right < num_times - 1):
                 next_index = -1
                 if (left == 0):
@@ -113,7 +99,6 @@ def greedy_coalescing_durations(probs, durations, k=1):
                 else:
                     left_score = probs[i, left - 1]
                     right_score = probs[i, right + 1]
-                    # print("left_score:{}, right_score:{}".format(left_score,right_score))
 
                     if (left_score > right_score):
                         left -= 1
@@ -124,14 +109,8 @@ def greedy_coalescing_durations(probs, durations, k=1):
 
                 span += 1
 
-            # print("pred_min shape:",pred_min.shape)
-            # print("indices shape:",indices.shape)
             pred_min[i, idx] = left
             pred_max[i, idx] = right
-
-        # print("Later:",left,right)
-
-    # print("{}/{} done".format(i,batch_size))
 
     return pred_min, pred_max
 
@@ -197,24 +176,10 @@ def start_end_exhaustive_sweep(start_scores, end_scores, k=1):
         durations = []  # store durations- start,end pairs
         duration_scores = []  # store scores for each duration
 
-        # print(start_scores[i,1] + end_scores[i,5])
-
         sum_scores = start_scores[i, :].unsqueeze(-1) + end_scores[i, :].unsqueeze(-1).t()
-        # print(sum_scores[1,5])
         sum_scores = torch.triu(sum_scores)
         sum_scores = sum_scores.flatten()
-        # print(sum_scores[1*num_times + 5])
-        # xx=input()
         best_k = torch.argsort(sum_scores, descending=True)[:k]  # pick best k
-
-        # for start in range(num_times):
-        # 	for end in range(start,num_times):
-        # 		duration_scores.append(start_scores[i,start]+end_scores[i,end])
-        # 		durations.append((start,end))
-        # 	print("start:",start)
-
-        # duration_scores=torch.tensor(duration_scores)
-        # best_k=torch.argsort(duration_scores,descending=True)[:k] #pick best k
 
         for j, idx in enumerate(best_k):  # store start and end boundaries
             end = idx % num_times
@@ -255,10 +220,8 @@ def duration_scores(probs, durations, k=1):
             score_duration = [];
             score_duration_range = []
             range_start = torch.max((best_t - duration), torch.tensor([0]))
-            # range_end   = torch.min(best_t, torch.tensor(probs.shape[-1]-duration-1))
             range_end = torch.min(best_t, probs.shape[-1] - duration - 1)
 
-            # print("range_start:{}, range_end:{}, duration:{}".format(range_start, range_end, duration))
             for start_time in range(range_start, range_end + 1, 1):
                 end_time = start_time + duration
                 score_duration.append(all_scores[start_time:end_time + 1].sum())
@@ -270,22 +233,6 @@ def duration_scores(probs, durations, k=1):
             pred_min[batch_id, idx] = start
             pred_max[batch_id, idx] = end
 
-        # print("Predicted- start:{}, end:{}".format(start,end))
-        # print("duration:{}".format(duration))
-        # xx=input()
-
-        # best_score_duration.append(score_duration_range[torch.argmax(score_duration)])
-        # best_scores.append(score_duration[torch.argmax(score_duration)])
-
-    # best_score_duration_start = []
-    # best_score_duration_end = []
-    # for ele in best_score_duration:
-    #     s,e = ele
-    #     best_score_duration_start.append(kvalid.id2year_mat[s])
-    #     best_score_duration_end.append(kvalid.id2year_mat[e])
-
-    # best_score_duration_start = torch.tensor(best_score_duration_start)
-    # best_score_duration_end   = torch.tensor(best_score_duration_end)
     return pred_min, pred_max
 
 

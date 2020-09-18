@@ -86,10 +86,6 @@ class Trainer(object):
         self.load_to_gpu=load_to_gpu
         self.time_neg_samples = time_neg_samples
 
-        # self.normalize_time=None
-        # if(self.scoring_function.__class__.__name__=='time_complex'): #for hyTE model
-        #     self.normalize_time=True
-
         print("Using regularization_coefficient[:", regularization_coefficient)
 
         self.use_time_facts = use_time_facts
@@ -114,9 +110,6 @@ class Trainer(object):
         else:
             s, r, o, t, ns, no = self.train.tensor_sample(self.batch_size, self.negative_count)
 
-        # print("Data point!: s, r, o, t", s,r,o,t)
-        # print("Data point shape!: s:{}, r:{}, o:{}, t:{}, ns:{}, no:{}", s.shape,r.shape,o.shape,t.shape,ns.shape,no.shape)
-
         flag = random.randint(1, 10001)
         if flag > 9950:
             flag_debug = 1
@@ -127,18 +120,11 @@ class Trainer(object):
             fp = self.scoring_function(s, r, o, t, flag_debug=flag_debug + 1)
             fno = self.scoring_function(s, r, no, t, flag_debug=flag_debug + 1)
             fns = self.scoring_function(ns, r, o, t, flag_debug=flag_debug + 1)
-            # fnt = self.scoring_function(s, r, o, None, flag_debug=flag_debug+1)##
         else:
             fp = self.scoring_function(s, r, o, t, flag_debug=0)
             fno = self.scoring_function(s, r, no, t, flag_debug=0)
             fns = self.scoring_function(ns, r, o, t, flag_debug=0)
-            # fnt = self.scoring_function(s, r, o, None, flag_debug=0)##
 
-        '''
-        fp = self.scoring_function(s, r, o)
-        fns = self.scoring_function(ns, r, o)
-        fno = self.scoring_function(s, r, no)
-        '''
         if self.flag_add_reverse==0:
             if self.negative_count == 0:  # use all ent as neg sample
                 loss = self.loss(s, fns) + self.loss(o, fno)
@@ -153,7 +139,6 @@ class Trainer(object):
 
         # ---time negative sampling---#
         if self.time_neg_samples:
-            print("**Time negative samples")
             nt = []
             fnt = self.scoring_function(s, r, o, None, flag_debug=flag_debug)  # only full softmax for now
             loss = loss + self.loss(t[:, 0, :], fnt)
@@ -164,33 +149,23 @@ class Trainer(object):
 
             t_start, t_end, positive_r, negative_r = get_time_facts(t, r)
 
-            # pdb.set_trace()
             fpt = self.scoring_function.time_forward(t_start, positive_r, t_end)
             fnt = self.scoring_function.time_forward(t_end, positive_r, t_end)
 
             loss = loss + 0.2 * self.time_loss(fpt, fnt)
 
-            # fpt=self.scoring_function.time_forward(t_end, negative_r, t_start)
-            # fnt=self.scoring_function.time_forward(t_start, negative_r, t_end)
-
         # ----------------------------------------#
 
         if self.regularization_coefficient is not None:
-            # '''
             reg = self.regularizer(s, r, o,
-                                   t)  # , reg_val=3) #+ self.regularizer(ns, r, o) + self.regularizer(s, r, no)
+                                   t) 
 
             if self.use_time_facts and t is not None:
                 t_start, t_end, positive_r, negative_r = get_time_facts(t, r)
                 reg += self.scoring_function.time_regularizer(t_start, positive_r, t_end)
 
-            # reg = reg / (self.batch_size * self.scoring_function.embedding_dim)
             loss += self.regularization_coefficient * reg
-            # '''
-            '''
-            reg = self.regularizer(s, r, o) + self.regularizer(ns, r, o) + self.regularizer(s, r, no)
-            reg = reg/(self.batch_size*self.scoring_function.embedding_dim*(1+2*self.negative_count))
-            '''
+
         else:
             reg = None
 
@@ -198,14 +173,7 @@ class Trainer(object):
         rg = reg.item() if reg is not None else 0
         self.optim.zero_grad()
         loss.backward()
-        if self.gradient_clip is not None:
-            # print("gradient_clip:",self.gradient_clip)
-            # for name, param in self.scoring_function.named_parameters():
-            #     if param.requires_grad:
-            #         print(name)
-            # torch.nn.utils.clip_grad_norm_(self.scoring_function.parameters(), self.gradient_clip)
-            pass
-
+ 
         self.optim.step()
 
         debug = ""
@@ -325,9 +293,7 @@ class Trainer(object):
         losses = []
         count = 0
 
-        # CPU
-        # self.scoring_function=self.scoring_function.cpu()
-
+        # Uncomment the following block to evaluate before starting training (useful for debugging)
         '''
         self.scoring_function.eval()
         if(self.scoring_function.__class__.__name__.endswith('charCNN')): #precompute charcnn embeddings for all ent
@@ -361,10 +327,6 @@ class Trainer(object):
             prefix = "Mini Batches %5d or %5.1f epochs" % (i + 1, i * self.batch_size / self.train.kb.facts.shape[0])
             utils.print_progress_bar(len(losses), batch_count[0], prefix=prefix, suffix=suffix)
 
-            # print("Pairwise model weights sub:", self.scoring_function.pairwise_model.W_sub.data)
-            # print("Pairwise model weights sub:", self.scoring_function.pairwise_model.scoring_gadget['subject'].
-            #       mean_r_r)
-
             if len(losses) >= batch_count[0]:
                 count += 1
 
@@ -372,13 +334,7 @@ class Trainer(object):
                 losses = []
                 if count == batch_count[1]:
 
-                    if (self.scoring_function.__class__.__name__.endswith(
-                            'charCNN')):  # precompute charcnn embeddings for all ent
-                        self.compute_charcnn_embed()
-
                     self.scoring_function.eval()
-
-                    # print("Pairwise model weights sub:", self.scoring_function.pairwise_model_dict["start-start"].W_sub.data)
 
                     valid_score = evaluate.evaluate("valid", self.ranker_valid, self.valid.kb, self.eval_batch,
                                                     predict_rel=predict_rel, verbose=self.verbose, hooks=self.hooks, load_to_gpu=self.load_to_gpu, 
@@ -398,6 +354,4 @@ class Trainer(object):
                     self.save_state(i, valid_score, test_score)
         print()
         print("Ending")
-        # print(self.best_mrr_on_valid["valid_m"])
-        # print(self.best_mrr_on_valid["test_m"])
         print(self.best_mrr_on_valid)

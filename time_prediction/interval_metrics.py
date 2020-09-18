@@ -23,9 +23,6 @@ def smooth_iou_score(pred_start, pred_end, gold_start, gold_end, delta=0):
 	numerator   = torch.min(t_pred_max.squeeze(), t_gold_max.squeeze()) - torch.max(t_pred_min.squeeze(), t_gold_min.squeeze()) 
 	denomerator = torch.max(t_pred_max.squeeze(), t_gold_max.squeeze()) - torch.min(t_pred_min.squeeze(), t_gold_min.squeeze())
 
-	# non_zero_inter = (numerator > 0).type("torch.DoubleTensor").nonzero()
-	# zero_inter = (numerator <= 0).type("torch.DoubleTensor").nonzero()        
-
 	#--IMPORTANT!- as (t,t) interval length is counted 0---#
 	numerator+=1
 	denomerator+=1
@@ -48,10 +45,6 @@ def smooth_iou_score(pred_start, pred_end, gold_start, gold_end, delta=0):
 		score = delta*torch.exp(-torch.sqrt(numerator**2)).type('torch.FloatTensor')
 		iou_score.scatter_(0,zero_inter,score)#0)
 	#-------------------#
-
-	# print(len(iou_score))
-	# print(len(iou_score.nonzero()))
-	# print(torch.mean(iou_score))
 
 	return iou_score
 
@@ -101,10 +94,6 @@ def aeiou_score(pred_start, pred_end, gold_start, gold_end, delta=0):
 		iou_score.scatter_(0,zero_inter,score)#0)
 	#-------------------#
 
-	# print(len(iou_score))
-	# print(len(iou_score.nonzero()))
-	# print(torch.mean(iou_score))
-
 	return iou_score
 
 
@@ -150,13 +139,8 @@ def giou_score(pred_start, pred_end, gold_start, gold_end, delta=0):
 	t_pred_max=torch.max(t_pred_min, t_pred_max) #just in case
 
 
-	# pdb.set_trace()
-
 	numerator   = torch.min(t_pred_max.squeeze(), t_gold_max.squeeze()) - torch.max(t_pred_min.squeeze(), t_gold_min.squeeze())
 	denomerator = torch.max(t_pred_max.squeeze(), t_gold_max.squeeze()) - torch.min(t_pred_min.squeeze(), t_gold_min.squeeze())
-
-
-
 
 	#--IMPORTANT!- as (t,t) interval length is counted 0---#
 	numerator+=1
@@ -167,21 +151,7 @@ def giou_score(pred_start, pred_end, gold_start, gold_end, delta=0):
 
 	numerator[numerator<0]*=-1
 
-
-	# x= (numerator/(denomerator+1e-8).type('torch.FloatTensor').squeeze())
-	# incorrect= x>1
-	# idx=incorrect[0]
-	# print("predicted max:{}, min:{}".format(t_pred_max[idx], t_pred_min[idx]))
-	# print("gold max:{}, min:{}".format(t_gold_max[idx], t_gold_min[idx]))
-	# pdb.set_trace()
-
-
 	giou_score_val = 1 + iou_score - (numerator/(denomerator+1e-8).type('torch.FloatTensor').squeeze())
-
-	# try:
-	# 	assert(len(torch.nonzero(giou_score_val < 0)) == 0)
-	# except Exception as e:
-	# 	pdb.set_trace()
 
 	return 0.5*giou_score_val
 
@@ -201,7 +171,6 @@ def precision_score(pred_start, pred_end, gold_start, gold_end, delta=0):
 	t_gold_max, t_gold_min= gold_end, gold_start
 
 
-	# numerator   = torch.min(t_pred_max.squeeze(), t_gold_max.squeeze()) - torch.max(t_pred_min.squeeze(), t_gold_min.squeeze()) 
 	numerator   = t_gold_max.squeeze() - t_gold_min.squeeze() # gold  
 	denomerator = torch.max(t_pred_max.squeeze(), t_gold_max.squeeze()) - torch.min(t_pred_min.squeeze(), t_gold_min.squeeze()) # hull 
 
@@ -232,7 +201,6 @@ def recall_score(pred_start, pred_end, gold_start, gold_end, delta=0):
 
 
 	numerator   = torch.min(t_pred_max.squeeze(), t_gold_max.squeeze()) - torch.max(t_pred_min.squeeze(), t_gold_min.squeeze()) 
-	# numerator   = t_gold_max.squeeze() - t_gold_min.squeeze() # gold  
 	denomerator = t_gold_max.squeeze() - t_gold_min.squeeze() # hull 
 
 
@@ -243,7 +211,6 @@ def recall_score(pred_start, pred_end, gold_start, gold_end, delta=0):
 
 	intersecting= numerator > 0
 
-	# pdb.set_trace()	
 	recall_score= (numerator/denomerator)* intersecting.float() 
 
 	return recall_score

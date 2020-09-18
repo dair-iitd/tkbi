@@ -54,7 +54,6 @@ class data_loader(object):
         else:  # for TA-x model
             t = self.kb.facts_time_tokens[indexes]
             t = numpy.expand_dims(t, -1)
-            # print("t shape during training:",t.shape)
 
         ns = numpy.random.randint(low=0, high=len(self.kb.datamap.entity_map) - 1, size=(batch_size, negative_count))
         no = numpy.random.randint(low=0, high=len(self.kb.datamap.entity_map) - 1, size=(batch_size, negative_count))
@@ -77,7 +76,6 @@ class data_loader(object):
         if exclude is None:
             nt = numpy.random.randint(low=0, high=num_times - 1, size=(batch_size, negative_count))
         else:
-            # need to implement
             pass
 
         return nt
@@ -111,13 +109,6 @@ class data_loader(object):
             t = numpy.expand_dims(t, -1)
             # print("t shape during training:",t.shape)
 
-
-        # if self.loss == "crossentropy_loss":
-        #     ns_fwd = None;
-        #     no_fwd = None
-        # else:
-        #     ns_fwd = numpy.random.randint(0, self.kb.nonoov_entity_count, (batch_size, negative_count))
-        #     no_fwd = numpy.random.randint(0, self.kb.nonoov_entity_count, (batch_size, negative_count))
         num_relations = len(self.kb.datamap.relation_map)
         r_rev = r_fwd + num_relations
 
@@ -131,16 +122,6 @@ class data_loader(object):
         if self.first_zero:
             ns[:, 0] = self.kb.nonoov_entity_count - 1
             no[:, 0] = self.kb.nonoov_entity_count - 1
-
-        # if self.loss == "crossentropy_loss":
-        #     ns = None
-        #     no = None
-        # else:
-        #     ns = numpy.concatenate([ns_fwd, no_fwd])  ##to do randomly generate ns_rev and no_rev
-        #     no = numpy.concatenate([no_fwd, ns_fwd])
-        #     if self.first_zero:
-        #         ns[:, 0] = self.kb.nonoov_entity_count - 1
-        #         no[:, 0] = self.kb.nonoov_entity_count - 1
 
         return [s, r, o, t, ns, no]
 

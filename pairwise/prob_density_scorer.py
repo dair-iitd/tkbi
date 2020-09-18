@@ -65,8 +65,6 @@ class ProbDensityScorer(torch.nn.Module):
         mean_r_r, var_r_r = mean_variance(train_kb.facts, t1_map, t2_map, relation_count, min_support=min_support,
                                           mode=mode, mask = self.mask_r_r)
 
-        # pdb.set_trace()
-
         # init rxr tensors for mean & variance
         self.mean_r_r = func_load_to_gpu(torch.zeros(relation_count, relation_count ), self.load_to_gpu)
         self.var_r_r = func_load_to_gpu(torch.zeros(relation_count, relation_count), self.load_to_gpu)
@@ -142,11 +140,6 @@ class ProbDensityScorer(torch.nn.Module):
 
         if self.use_offset:
             prob = prob + offset
-
-        # try:
-        #     prob = prob * (r_query!=r_link).float() #no r-r score
-        # except:
-        #     pdb.set_trace()
 
         return prob 
 
@@ -243,8 +236,6 @@ class RecurringFactScorer(torch.nn.Module):
         var = self.var_r[r_query]
         offset = self.offset_r[r_query]
         weights = self.W_r[r_query]
-        # return offset
-        # '''
 
         # --compute prob density-- #
         if self.distribution == 'gaussian':
@@ -260,7 +251,6 @@ class RecurringFactScorer(torch.nn.Module):
         prob = prob + offset
 
         return prob
-        # '''
 
     def regularizer(self):
         return (self.offset_r**2).sum() + (self.W_r**2).sum()

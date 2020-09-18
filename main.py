@@ -25,7 +25,7 @@ torch.manual_seed(32)
 np.random.seed(12)
 
 has_cuda = torch.cuda.is_available()
-#has_cuda=False
+
 if not has_cuda:
     utils.colored_print("yellow", "CUDA is not available, using cpu")
 
@@ -43,7 +43,7 @@ def init_model(model_name, model_arguments, datamap, ktrain, eval_batch_size, fl
         model_arguments['timeInterval_count'] = len(datamap.year2id)
         print("BIN: to year-pair", datamap.year2id)
     else:
-        model_arguments['timeInterval_count'] = len(datamap.dateYear2id)  # intervalId2dateYears)#year2id)#dateYear2id
+        model_arguments['timeInterval_count'] = len(datamap.dateYear2id) 
         print("Number of timestamps: ", len(datamap.dateYear2id))
         print(list(datamap.dateYear2id.items())[-10:])
 
@@ -57,8 +57,6 @@ def init_model(model_name, model_arguments, datamap, ktrain, eval_batch_size, fl
     if flag_add_reverse:
         model_arguments['relation_count'] = len(datamap.relation_map) * 2
         model_arguments['flag_add_reverse'] = flag_add_reverse
-        # print("Using reg 3")
-        # model_arguments['reg'] = 3
     elif expand_mode=='start-end-diff-relation':
         #TODO: modify datamap to store 2*num_relations
         # (instead of only changing the model argument)
@@ -71,19 +69,6 @@ def init_model(model_name, model_arguments, datamap, ktrain, eval_batch_size, fl
     if model_name in ['TimePlex']:
         model_arguments['train_kb'] = ktrain
         model_arguments['eval_batch_size'] = eval_batch_size
-
-
-    # if model_name.startswith('time_order_constraint'):
-    #     model_arguments['train_kb'] = ktrain
-
-    # if model_name.startswith('Pairwise'):
-    #     model_arguments['train_kb'] = ktrain
-    #     model_arguments['eval_batch_size'] = eval_batch_size
-
-    # if model_name.startswith('Test'):
-    #     model_arguments['train_kb'] = ktrain
-    #     model_arguments['eval_batch_size'] = eval_batch_size
-
 
     print("final model arguments", model_arguments)
 
@@ -116,11 +101,6 @@ def main(mode, dataset, dataset_root, save_dir, tflogs_dir, debug, model_name, m
     print("Flag: use_time_tokenizer-", use_time_tokenizer)
 
     print("Flag: flag_add_reverse-", flag_add_reverse)
-    # if re.search("_lx", model_name):# or model_name=="TimePlex":
-    #     flag_add_reverse = 1
-    # else:
-    #     flag_add_reverse = 0
-    # -------------------------------------- #
 
     if resume_from_save:
         map_location = None if has_cuda else 'cpu'
@@ -134,7 +114,6 @@ def main(mode, dataset, dataset_root, save_dir, tflogs_dir, debug, model_name, m
 
         model_arguments = saved_model_arguments
         print("model_arguments:", model_arguments)
-        # model_arguments = model['model_arguments']  # load model_arguments for model init (argument ignored)
 
     else:
         # --for HyTE-like binning-- #
@@ -189,10 +168,6 @@ def main(mode, dataset, dataset_root, save_dir, tflogs_dir, debug, model_name, m
     print("Train (no expansion)", ktrain.facts.shape)
     print("Test", ktest.facts.shape)
     print("Valid", kvalid.facts.shape)
-
-    # print("dateYear2id", len(datamap.dateYear2id))
-    # print("dateYear2id", datamap.dateYear2id)
-    # print("intervalId2dateYears", len(datamap.intervalId2dateYears))
 
     if not eval_batch_size:
         eval_batch_size = max(40, batch_size * 2 * negative_sample_count // len(datamap.entity_map))
@@ -257,8 +232,6 @@ def main(mode, dataset, dataset_root, save_dir, tflogs_dir, debug, model_name, m
                  )
 
     elif mode == 'test':
-        # if not eval_batch_size:
-        #     eval_batch_size = max(40, batch_size * 2 * negative_sample_count // len(datamap.entity_map))
 
         # Load Model
         map_location = None if has_cuda else 'cpu'
@@ -277,9 +250,6 @@ def main(mode, dataset, dataset_root, save_dir, tflogs_dir, debug, model_name, m
         # ---entity/relation prediction--- #
         print("Scores with {} filtering".format(filter_method))
 
-        # ranker = evaluate.Ranker(scoring_function, kb.union([ktrain, kvalid, ktest]), kb_data=kvalid,
-        #                          filter_method=filter_method, flag_additional_filter=flag_additional_filter,
-        #                          expand_mode=expand_mode, load_to_gpu=has_cuda)
         ranker = evaluate.Ranker(scoring_function, kb.union([ranker_ktrain, ranker_kvalid, ranker_ktest]), kb_data=ranker_kvalid,
                                  filter_method=filter_method, flag_additional_filter=flag_additional_filter,
                                  expand_mode=expand_mode, load_to_gpu=has_cuda)
@@ -289,9 +259,6 @@ def main(mode, dataset, dataset_root, save_dir, tflogs_dir, debug, model_name, m
                                         verbose=verbose, hooks=hooks, save_text=save_text,
                                         predict_rel=predict_rel, load_to_gpu=has_cuda, flag_add_reverse=flag_add_reverse)
 
-        # ranker = evaluate.Ranker(scoring_function, kb.union([ktrain, kvalid, ktest]), kb_data=test,
-        #                          filter_method=filter_method, flag_additional_filter=flag_additional_filter,
-        #                          expand_mode=expand_mode, load_to_gpu=has_cuda)
 
         ranker = evaluate.Ranker(scoring_function, kb.union([ranker_ktrain, ranker_kvalid, ranker_ktest]), kb_data=ranker_ktest,
                                  filter_method=filter_method, flag_additional_filter=flag_additional_filter,

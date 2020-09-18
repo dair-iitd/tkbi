@@ -27,10 +27,6 @@ class TimePlex_base(torch.nn.Module):
 
         super(TimePlex_base, self).__init__()
         
-        # self.flag_add_reverse = flag_add_reverse
-        # if self.flag_add_reverse==1:
-        #     relation_count*=2    
-
         if init_embed is None:
             init_embed = {}
             for embed_type in ["E_im", "E_re", "R_im", "R_re", "T_im", "T_re"]:
@@ -161,12 +157,6 @@ class TimePlex_base(torch.nn.Module):
         t2_re = self.To_re(t) if t is not None else self.To_re.weight.unsqueeze(0)[:, :-2, :]
         t2_im = self.To_im(t) if t is not None else self.To_im.weight.unsqueeze(0)[:, :-2, :]
 
-
-        # if flag_debug:
-        #     print("Time embedd data")
-        #     print("t_re", t_re.shape, torch.mean(t_re), torch.std(t_re))
-        #     print("t_im", t_im.shape, torch.mean(t_im), torch.std(t_im))
-
         #########
 
         #########
@@ -208,10 +198,8 @@ class TimePlex_base(torch.nn.Module):
 
             srt = complex_3way_simple(s_re, s_im, rs_re, rs_im, t_re, t_im)
 
-            # ort = complex_3way_simple(o_re, o_im, ro_re, ro_im, t_re, t_im)
             ort = complex_3way_simple(t_re, t_im, ro_re, ro_im, o_re, o_im)
 
-            # sot = complex_3way_simple(s_re, s_im,  t2_re, t2_im, o_re, o_im)
             sot = complex_3way_simple(s_re, s_im,  t_re, t_im, o_re, o_im)
 
         else:
@@ -219,30 +207,21 @@ class TimePlex_base(torch.nn.Module):
             
             srt = complex_3way_fullsoftmax(s, r, t, s_re, s_im, rs_re, rs_im, t_re, t_im, self.embedding_dim)
             
-            # ort = complex_3way_fullsoftmax(o, r, t, o_re, o_im, ro_re, ro_im, t_re, t_im, self.embedding_dim)
             ort = complex_3way_fullsoftmax(t, r, o, t_re, t_im, ro_re, ro_im, o_re, o_im, self.embedding_dim)
 
-            # sot = complex_3way_fullsoftmax(s, t, o, s_re, s_im, t2_re, t2_im, o_re, o_im,  self.embedding_dim)
             sot = complex_3way_fullsoftmax(s, t, o, s_re, s_im, t_re, t_im, o_re, o_im,  self.embedding_dim)
 
 
         result = sro + self.srt_wt * srt + self.ort_wt * ort + self.sot_wt * sot
-        # result = srt
 
         return result
 
     def regularizer(self, s, r, o, t, reg_val=0):
         if t is not None:
-            # if not t.shape[-1]==1:
             if (t.shape[-1] == len(time_index)):  # pick which dimension to index
                 t = t[:, :, time_index["t_s"]]
             else:
                 t = t[:, time_index["t_s"], :]
-
-            # if (t.shape[-1] == len(time_index)):  # pick which dimension to index
-            #     t = t[:, :, 0]
-            # else:
-            #     t = t[:, 0, :]
 
         s_im = self.E_im(s)
         r_im = self.R_im(r)
@@ -269,19 +248,16 @@ class TimePlex_base(torch.nn.Module):
 
         ####
 
-        # te_re = self.Te_re(t)
-        # te_im = self.Te_im(t)
         if reg_val:
             self.reg = reg_val
-        # print("CX reg", reg_val)
 
         #--time regularization--#
         time_reg = 0.0
         if self.time_reg_wt!=0:
-            ts_re_all = (self.Ts_re.weight.unsqueeze(0))#[:, :-2, :])
-            ts_im_all = (self.Ts_im.weight.unsqueeze(0))#[:, :-2, :])
-            to_re_all = (self.To_re.weight.unsqueeze(0))#[:, :-2, :])
-            to_im_all = (self.To_im.weight.unsqueeze(0))#[:, :-2, :])
+            ts_re_all = (self.Ts_re.weight.unsqueeze(0))
+            ts_im_all = (self.Ts_im.weight.unsqueeze(0))
+            to_re_all = (self.To_re.weight.unsqueeze(0))
+            to_im_all = (self.To_im.weight.unsqueeze(0))
             
             time_reg = time_regularizer(ts_re_all, ts_im_all) + time_regularizer(to_re_all, to_im_all) 
             time_reg *= self.time_reg_wt
@@ -289,8 +265,6 @@ class TimePlex_base(torch.nn.Module):
         # ------------------#
 
         if self.reg == 2:
-            # return (s_re**2+o_re**2+r_re**2+s_im**2+r_im**2+o_im**2 + tr_re**2 + tr_im**2).sum()
-            # return (s_re**2+o_re**2+r_re**2+s_im**2+r_im**2+o_im**2).sum() + (tr_re**2 + tr_im**2).sum()
             rs_sum = (rs_re ** 2 + rs_im ** 2).sum()
             ro_sum = (ro_re ** 2 + ro_im ** 2).sum()
             o2_sum = (o2_re ** 2 + o2_im ** 2).sum()
@@ -337,24 +311,10 @@ class TimePlex_base(torch.nn.Module):
     def post_epoch(self):
         if (self.normalize_time):
             with torch.no_grad():
-                # normalize Tr
-                # self.normalize_complex(self.Tr_re, self.Tr_im)
-                # norm=torch.sqrt(self.Tr_re.weight**2 + self.Tr_im.weight**2)
-                # self.Tr_re.weight.div_(norm)
-                # self.Tr_im.weight.div_(norm)
-
-                # self.Tr_re.weight.div_(torch.norm(self.Tr_re.weight, dim=-1, keepdim=True))
-                # self.Tr_im.weight.div_(torch.norm(self.Tr_im.weight, dim=-1, keepdim=True))
-
                 self.Ts_re.weight.div_(torch.norm(self.Ts_re.weight, dim=-1, keepdim=True))
                 self.Ts_im.weight.div_(torch.norm(self.Ts_im.weight, dim=-1, keepdim=True))
                 self.To_re.weight.div_(torch.norm(self.To_re.weight, dim=-1, keepdim=True))
                 self.To_im.weight.div_(torch.norm(self.To_im.weight, dim=-1, keepdim=True))
-
-        # normalize Te
-        # self.normalize_complex(self.Te_re, self.Te_im)
-        # self.Te_re.weight.div_(torch.norm(self.Te_re.weight, dim=-1, keepdim=True))
-        # self.Te_im.weight.div_(torch.norm(self.Te_im.weight, dim=-1, keepdim=True))
 
         if (self.unit_reg):
             self.E_im.weight.data.div_(self.E_im.weight.data.norm(2, dim=-1, keepdim=True))
@@ -410,24 +370,6 @@ class TComplex_lx(torch.nn.Module):
         torch.nn.init.normal_(self.T_re.weight.data, 0, 0.05)
         torch.nn.init.normal_(self.T_im.weight.data, 0, 0.05)
         # '''
-
-        '''
-        torch.nn.init.constant_(self.E_re.weight.data, emb_init)
-        torch.nn.init.constant_(self.E_im.weight.data, emb_init)
-        torch.nn.init.constant_(self.R_re.weight.data, emb_init)
-        torch.nn.init.constant_(self.R_im.weight.data, emb_init)
-
-        # init time embeddings
-        torch.nn.init.constant_(self.T_re.weight.data, emb_init)
-        torch.nn.init.constant_(self.T_im.weight.data, emb_init)
-        # '''
-
-        # self.E_re.weight.data *= emb_init
-        # self.E_im.weight.data *= emb_init
-        # self.R_re.weight.data *= emb_init
-        # self.R_im.weight.data *= emb_init
-        # self.T_re.weight.data *= emb_init
-        # self.T_im.weight.data *= emb_init
 
         self.minimum_value = -self.embedding_dim * self.embedding_dim
         self.clamp_v = clamp_v
@@ -507,12 +449,6 @@ class TComplex_lx(torch.nn.Module):
             else:
                 t = t[:, time_index["t_s"], :]
 
-            # # if not t.shape[-1]==1:
-            # if (t.shape[-1] == len(time_index)):  # pick which dimension to index
-            #     t = t[:, :, 0]
-            # else:
-            #     t = t[:, 0, :]
-
         s_im = self.E_im(s)
         r_im = self.R_im(r)
         o_im = self.E_im(o)
@@ -544,16 +480,13 @@ class TComplex_lx(torch.nn.Module):
             factor = [torch.sqrt(s_re ** 2 + s_im ** 2), 
                       torch.sqrt(o_re ** 2 + o_im ** 2),
                       torch.sqrt(r_re ** 2 + r_im ** 2),
-                    #   torch.sqrt(t_re ** 2 + t_im ** 2)]
                       torch.sqrt(r_re_t ** 2 + r_im_t ** 2)]
 
             factor_wt = [1, 1, 1, 1]
-            # factor_wt = [1, 1, 1]
 
             reg = 0
             for ele,wt in zip(factor,factor_wt):
                 reg += wt* torch.sum(torch.abs(ele) ** 3)
-            # pdb.set_trace()
             ret =  self.emb_reg_wt * reg / factor[0].shape[0]
 
         else:
@@ -635,24 +568,6 @@ class TNTComplex_lx(torch.nn.Module):
         torch.nn.init.normal_(self.T_im.weight.data, 0, 0.05)
         # '''
 
-        '''
-        torch.nn.init.constant_(self.E_re.weight.data, emb_init)
-        torch.nn.init.constant_(self.E_im.weight.data, emb_init)
-        torch.nn.init.constant_(self.R_re.weight.data, emb_init)
-        torch.nn.init.constant_(self.R_im.weight.data, emb_init)
-
-        # init time embeddings
-        torch.nn.init.constant_(self.T_re.weight.data, emb_init)
-        torch.nn.init.constant_(self.T_im.weight.data, emb_init)
-        # '''
-
-        # self.E_re.weight.data *= emb_init
-        # self.E_im.weight.data *= emb_init
-        # self.R_re.weight.data *= emb_init
-        # self.R_im.weight.data *= emb_init
-        # self.T_re.weight.data *= emb_init
-        # self.T_im.weight.data *= emb_init
-
         self.minimum_value = -self.embedding_dim * self.embedding_dim
         self.clamp_v = clamp_v
 
@@ -732,7 +647,6 @@ class TNTComplex_lx(torch.nn.Module):
             srto_inv = complex_3way_simple(o_re, o_im, r_re_t, r_im_t, s_re, s_im)
 
 
-            # result = srto 
             result = srto + srto_inv
             return result
 
@@ -753,12 +667,6 @@ class TNTComplex_lx(torch.nn.Module):
                 t = t[:, :, time_index["t_s"]]
             else:
                 t = t[:, time_index["t_s"], :]
-
-            # # if not t.shape[-1]==1:
-            # if (t.shape[-1] == len(time_index)):  # pick which dimension to index
-            #     t = t[:, :, 0]
-            # else:
-            #     t = t[:, 0, :]
 
         s_im = self.E_im(s)
         r_im = self.R_im(r)
@@ -799,12 +707,10 @@ class TNTComplex_lx(torch.nn.Module):
                       torch.sqrt(r_no_time_re ** 2 + r_no_time_im ** 2)]
 
             factor_wt = [1, 1, 1, 1, 1]
-            # factor_wt = [1, 1, 1]
 
             reg = 0
             for ele,wt in zip(factor,factor_wt):
                 reg += wt* torch.sum(torch.abs(ele) ** 3)
-            # pdb.set_trace()
             ret =  self.emb_reg_wt * reg / factor[0].shape[0]
 
         else:
@@ -837,30 +743,11 @@ class TimePlex(torch.nn.Module):
                  srt_wt=1.0, ort_wt=1.0, sot_wt=0.0, base_model_inverse=False):
         super(TimePlex, self).__init__()
 
-        # print("Hard-coding U2_gadget_wt!!")
-        # U2_gadget_wt = 5.0
-        # print("Hard-coding pairwise_gadget_wt!!")
-        # pairwise_gadget_wt = 1.0
-
-
-
         self.entity_count = entity_count
         self.relation_count = relation_count
 
         print("Recurrent args:",recurrent_args)
         print("Pairs args:",pairs_args)
-
-
-
-        # if not self.base_model_inverse:
-        #     self.base_model = TimePlex_base(entity_count, relation_count, timeInterval_count,
-        #                                                     embedding_dim, reg=reg, srt_wt=srt_wt, ort_wt=ort_wt, sot_wt=sot_wt)
-        # else:
-        #     self.base_model = TimePlex_base(entity_count, 2*relation_count, timeInterval_count,
-        #                                                     embedding_dim, reg=reg, srt_wt=srt_wt, ort_wt=ort_wt, sot_wt=sot_wt)
-
-
-
 
         # --Load pretrained TimePlex(base) embeddings--#
         if model_path != "":
@@ -918,12 +805,9 @@ class TimePlex(torch.nn.Module):
         else:
             print("Not Initializing Recurrent")
                     
-        # pdb.set_trace()
-
 
     def forward(self, s, r, o, t, flag_debug=False):
 
-        # if not self.base_model_inverse:
         if not self.base_model_inverse or t is None:
             base_score = self.base_model(s, r, o, t)
         else:
@@ -952,8 +836,6 @@ class TimePlex(torch.nn.Module):
         pairs_reg = self.pairs.regularizer(s, r, o, t) if self.pairs_wt else 0.0
         recurrent_reg = self.recurrent.regularizer(s, r, o, t) if self.recurrent_wt else 0.0
         
-        # pdb.set_trace()
-
         if self.freeze_weights:
             return pairs_reg + recurrent_reg
         else:
@@ -973,11 +855,6 @@ class time_transE(torch.nn.Module):
         self.E = torch.nn.Embedding(self.entity_count, self.embedding_dim)
         self.R = torch.nn.Embedding(self.relation_count, self.embedding_dim)
         self.T = torch.nn.Embedding(self.timeInterval_count, self.embedding_dim)
-        '''
-		torch.nn.init.normal_(self.E_re.weight.data, 0, 0.05)
-		torch.nn.init.normal_(self.R_re.weight.data, 0, 0.05)
-		torch.nn.init.normal_(self.T_re.weight.data, 0, 0.05)
-		'''
 
         self.minimum_value = self.embedding_dim * self.embedding_dim  # opposite for transE
         self.clamp_v = clamp_v
@@ -989,27 +866,6 @@ class time_transE(torch.nn.Module):
 
         self.normalize_time = normalize_time
 
-        '''
-        # init- for testing
-        # emb_dir='./debug/wiki12k_hyte_emb/'
-        emb_dir = './debug/yago11k_hyte_emb/'
-        print("Initializing with trained weights loaded from {}".format(emb_dir))
-
-        # emb_dir='./debug/'
-        ent_init = np.load(os.path.join(emb_dir, "ent_embedding.npy"))
-        rel_init = np.load(os.path.join(emb_dir, "rel_embedding.npy"))
-        time_init = np.load(os.path.join(emb_dir, "time_embedding.npy"))
-
-        print("ent_init", self.entity_count, ent_init.shape)
-        print("rel_init", self.relation_count, rel_init.shape)
-        print("time_init", self.timeInterval_count, time_init.shape)
-        oov_embed = torch.randn(1, self.embedding_dim, dtype=torch.double)
-        ent_init_new = torch.cat((torch.tensor(ent_init, dtype=torch.double), oov_embed))
-        self.E.weight.data.copy_(ent_init_new)
-        self.R.weight.data.copy_(torch.from_numpy(rel_init))
-        self.T.weight.data.copy_(torch.from_numpy(time_init))
-
-        '''
         #'''
         torch.nn.init.xavier_normal_(self.E.weight.data)
         torch.nn.init.xavier_normal_(self.R.weight.data)
@@ -1018,7 +874,7 @@ class time_transE(torch.nn.Module):
 
     def time_projection(self, data, t):
         inner_prod = ((data * t).sum(dim=-1)).unsqueeze(
-            -1)  # *t#tf.tile(tf.expand_dims(tf.reduce_sum(data*t,axis=1),axis=1),[1,self.p.inp_dim])
+            -1) 
         prod = (t * inner_prod)
         data = data - prod
         return data
@@ -1044,25 +900,6 @@ class time_transE(torch.nn.Module):
 
         result = torch.abs(s_t + r_t - o_t).sum(dim=-1)
 
-        '''
-		print("s_e", s_e.shape, s_e[0,0,:10])
-		print("r_e", r_e.shape, r_e[0,0,:10])
-		print("o_e", o_e.shape, o_e[0,0,:10])
-		print("t_e", t_e.shape, t_e[0,0,:10])
-
-		print("s_t", s_t.shape, s_t[0,0,:10])
-		print("r_t", r_t.shape, r_t[0,0,:10])
-		print("o_t", o_t.shape, o_t[0,0,:10])
-
-		print("t", t.shape, t)
-
-		print("result", result.shape, result)
-		tmp = s_t + r_t - o_t
-		print("tmp", tmp.shape,tmp)
-		print("torch.abs(tmp)", torch.abs(tmp).shape,torch.abs(tmp))
-
-		print("\n")
-		'''
         return result
 
     def regularizer(self, s, r, o, t, reg_val=0):
@@ -1115,7 +952,6 @@ class transE(torch.nn.Module):
 
         result = torch.abs(s_e + r_e - o_e).sum(dim=-1)
 
-        # return result
         return -result # negated for CE-loss
 
 
@@ -1135,8 +971,6 @@ class transE(torch.nn.Module):
             print("Unknown reg for TransE model")
             assert (False)
 
-    # def post_epoch(self):
-    #     return ""
 
 
 def init_weights(m):
@@ -1206,11 +1040,6 @@ class distmult(torch.nn.Module):
             o_e.data.clamp_(-self.clamp_v, self.clamp_v)
         # '''
         if o is None or o.shape[1] > 1:
-            # # '''
-            # tmp1 = s_e * r_e
-            # result = (tmp1 * o_e).sum(dim=-1)
-            # # '''
-            # '''
             tmp1 = s_e * r_e
             if o is not None:
                 result = (tmp1 * o_e).sum(dim=-1)
@@ -1222,7 +1051,6 @@ class distmult(torch.nn.Module):
         # '''
 
         else:
-            # '''
             tmp1 = o_e * r_e
             if s is not None:
                 result = (tmp1 * s_e).sum(dim=-1)
@@ -1317,13 +1145,11 @@ class complex(torch.nn.Module):
     def forward(self, s, r, o, t, flag_debug=0):
         s_im = self.E_im(s) if s is not None else self.E_im.weight.unsqueeze(0)
 
-        # r_im = self.R_im(r)
         r_im = self.R_im(r) if r is not None else self.R_im.weight.unsqueeze(0)
 
         o_im = self.E_im(o) if o is not None else self.E_im.weight.unsqueeze(0)
         s_re = self.E_re(s) if s is not None else self.E_re.weight.unsqueeze(0)
 
-        # r_re = self.R_re(r)
         r_re = self.R_re(r) if r is not None else self.R_re.weight.unsqueeze(0)
 
         o_re = self.E_re(o) if o is not None else self.E_re.weight.unsqueeze(0)
@@ -1350,9 +1176,6 @@ class complex(torch.nn.Module):
         s_re = self.E_re(s)
         r_re = self.R_re(r)
         o_re = self.E_re(o)
-        # if reg_val:
-        # self.reg = reg_val
-        # print("CX reg", reg_val)
 
         if self.reg == 2:
             return (s_re ** 2 + o_re ** 2 + r_re ** 2 + s_im ** 2 + r_im ** 2 + o_im ** 2).sum()
@@ -1416,14 +1239,11 @@ class TA_complex(torch.nn.Module):
     def forward(self, s, r, o, t, flag_debug=0):
         t = t.squeeze()
 
-        # print("t :{}".format(t.size()))
         s_im = self.E_im(s) if s is not None else self.E_im.weight.unsqueeze(0)
         s_re = self.E_re(s) if s is not None else self.E_re.weight.unsqueeze(0)
 
-        # r_im = self.R_im(r)
         r_im = self.R_im(r) if r is not None else self.R_im.weight.unsqueeze(0)
 
-        # r_re = self.R_re(r)
         r_re = self.R_re(r) if r is not None else self.R_re.weight.unsqueeze(0)
 
         batch_size = list(s.shape)[0] if s is not None else list(o.shape)[0]
@@ -1475,10 +1295,6 @@ class TA_complex(torch.nn.Module):
 
             if o is not None:  # o.shape[1] > 1: #this doesn't work (only all ent as neg samples works)
 
-                # print("tmp1: {}, tmp2: {}".format(tmp1.size(), tmp2.size()))
-                # print("o_re size:",o_re.size())
-                # print("o_im size:",o_im.size())
-
                 result = (tmp1 * o_im + tmp2 * o_re).sum(dim=-1)
 
             else:  # all ent as neg samples
@@ -1498,50 +1314,34 @@ class TA_complex(torch.nn.Module):
                 s_re = s_re.view(-1, self.embedding_dim).transpose(0, 1)
                 result = tmp1 @ s_im + tmp2 @ s_re
         elif r is None:
-            # print("Evaluating scores for all relations")
             tmp1 = o_im * s_re - o_re * s_im;
             tmp1 = tmp1.view(-1, self.embedding_dim)
             tmp2 = o_im * s_im + o_re * s_re;
             tmp2 = tmp2.view(-1, self.embedding_dim)
 
-            # r_im = r_im.view(-1,self.embedding_dim).transpose(0,1)
-            # r_re = r_re.view(-1,self.embedding_dim).transpose(0,1)
-
             tmp1.unsqueeze_(1)
             tmp2.unsqueeze_(1)
 
-            # print("tmp1:{} , tmp2:{}, r_re:{}, r_im:{}".format(tmp1.size(), tmp2.size(), r_re.size(), r_im.size() ))
-
             result = (tmp1 * r_im + tmp2 * r_re).sum(dim=-1)
-        # print("result: {}".format(result.size()))
-        # print("Done")
-        # xx=input()
-        # pass
+
         return result
 
     # '''
 
     def get_rseq(self, r_e, tem, lstm, bs):
-        # r_e = r_e.unsqueeze(0).transpose(0, 1)
-
         tem_len = tem.shape[-1]
-        # print("bs: {}, tem_len:{}".format(bs,tem_len))
-        # print("r_e:{}, tem:{}".format(r_e.size(), tem.size()))
 
         tem = tem.contiguous()
         tem = tem.view(bs * tem_len)
         token_e = self.tem_embeddings(tem)
         token_e = token_e.view(bs, tem_len, self.embedding_dim)
-        # print("r_e:{}, token_e:{}".format(r_e.size(), token_e.size()))
 
         seq_e = torch.cat((r_e, token_e), 1)
-        # print("seq_e:{}".format(seq_e.size())
         hidden_tem = lstm(seq_e)
         hidden_tem = hidden_tem[0, :, :]
         rseq_e = hidden_tem
 
         rseq_e.unsqueeze_(1)
-        # print("rseq_e: {}\n".format(rseq_e.size()))
 
         return rseq_e
 
@@ -1551,34 +1351,21 @@ class TA_complex(torch.nn.Module):
         tem_len = tem.shape[-1]
         num_rel = r_e.shape[1]
 
-        # print("bs: {}, tem_len:{}".format(bs,tem_len))
-        # print("r_e:{}, tem:{}".format(r_e.size(), tem.size()))
-
         tem = tem.contiguous()
         tem = tem.view(bs * num_rel * tem_len)
         token_e = self.tem_embeddings(tem)
         token_e = token_e.view(bs, num_rel, tem_len, self.embedding_dim)
-        # print("r_e:{}, token_e:{}".format(r_e.size(), token_e.size()))
 
         seq_e = torch.cat((r_e, token_e), 2)
-        # print("seq_e:{}".format(seq_e.size()))
 
         seq_e = seq_e.view(bs * num_rel, tem_len + 1, self.embedding_dim)
-        # print("seq_e after resizing:{}".format(seq_e.size()))
 
         hidden_tem = lstm(seq_e)
         hidden_tem = hidden_tem[0, :, :]
 
-        # print("hidden_tem:{}".format(hidden_tem.size()))
-
         hidden_tem = hidden_tem.view(bs, num_rel, self.embedding_dim)
-        # print("hidden_tem after resizing:{}".format(hidden_tem.size()))
 
-        # hidden_tem = hidden_tem[0, :, :]
         rseq_e = hidden_tem
-
-        # rseq_e.unsqueeze_(2)
-        # print("rseq_e: {}\n".format(rseq_e.size()))
 
         return rseq_e
 
@@ -1589,9 +1376,6 @@ class TA_complex(torch.nn.Module):
         s_re = self.E_re(s)
         r_re = self.R_re(r)
         o_re = self.E_re(o)
-        # if reg_val:
-        # 	self.reg = reg_val
-        # print("CX reg", reg_val)
 
         if self.reg == 2:
             return (s_re ** 2 + o_re ** 2 + r_re ** 2 + s_im ** 2 + r_im ** 2 + o_im ** 2).sum()
@@ -1655,14 +1439,11 @@ class TA_distmult(torch.nn.Module):
     def forward(self, s, r, o, t, flag_debug=0):
         t = t.squeeze()
 
-        # print("t :{}".format(t.size()))
         s_im = self.E_im(s) if s is not None else self.E_im.weight.unsqueeze(0)
         s_re = self.E_re(s) if s is not None else self.E_re.weight.unsqueeze(0)
 
-        # r_im = self.R_im(r)
         r_im = self.R_im(r) if r is not None else self.R_im.weight.unsqueeze(0)
 
-        # r_re = self.R_re(r)
         r_re = self.R_re(r) if r is not None else self.R_re.weight.unsqueeze(0)
 
         batch_size = list(s.shape)[0] if s is not None else list(o.shape)[0]
@@ -1710,12 +1491,8 @@ class TA_distmult(torch.nn.Module):
         if o is None or o.shape[1] > 1:
             tmp1 = (s_re * r_re);
 
-            if o is not None:  # o.shape[1] > 1: #this doesn't work (only all ent as neg samples works)
-
-                # print("tmp1: {}, tmp2: {}".format(tmp1.size(), tmp2.size()))
-                # print("o_re size:",o_re.size())
-                # print("o_im size:",o_im.size())
-
+            if o is not None:#this doesn't work (only all ent as neg samples works)
+            
                 result = (tmp1 * o_re).sum(dim=-1)
 
             else:  # all ent as neg samples
@@ -1726,7 +1503,7 @@ class TA_distmult(torch.nn.Module):
         elif s is None or s.shape[1] > 1:
             tmp1 = (o_re * r_re);
 
-            if s is not None:  # s.shape[1] > 1:
+            if s is not None:
                 result = (tmp1 * s_re).sum(dim=-1)
             else:
                 tmp1 = tmp1.view(-1, self.embedding_dim)
@@ -1738,65 +1515,44 @@ class TA_distmult(torch.nn.Module):
     # '''
 
     def get_rseq(self, r_e, tem, lstm, bs):
-        # r_e = r_e.unsqueeze(0).transpose(0, 1)
 
         tem_len = tem.shape[-1]
-        # print("bs: {}, tem_len:{}".format(bs,tem_len))
-        # print("r_e:{}, tem:{}".format(r_e.size(), tem.size()))
 
         tem = tem.contiguous()
         tem = tem.view(bs * tem_len)
         token_e = self.tem_embeddings(tem)
         token_e = token_e.view(bs, tem_len, self.embedding_dim)
-        # print("r_e:{}, token_e:{}".format(r_e.size(), token_e.size()))
 
         seq_e = torch.cat((r_e, token_e), 1)
-        # print("seq_e:{}".format(seq_e.size()))
 
         hidden_tem = lstm(seq_e)
         hidden_tem = hidden_tem[0, :, :]
         rseq_e = hidden_tem
 
         rseq_e.unsqueeze_(1)
-        # print("rseq_e: {}\n".format(rseq_e.size()))
 
         return rseq_e
 
     def get_rseq_all(self, r_e, tem, lstm, bs):
-        # r_e = r_e.unsqueeze(0).transpose(0, 1)
 
         tem_len = tem.shape[-1]
         num_rel = r_e.shape[1]
-
-        # print("bs: {}, tem_len:{}".format(bs,tem_len))
-        # print("r_e:{}, tem:{}".format(r_e.size(), tem.size()))
 
         tem = tem.contiguous()
         tem = tem.view(bs * num_rel * tem_len)
         token_e = self.tem_embeddings(tem)
         token_e = token_e.view(bs, num_rel, tem_len, self.embedding_dim)
-        # print("r_e:{}, token_e:{}".format(r_e.size(), token_e.size()))
 
         seq_e = torch.cat((r_e, token_e), 2)
-        # print("seq_e:{}".format(seq_e.size()))
 
         seq_e = seq_e.view(bs * num_rel, tem_len + 1, self.embedding_dim)
-        # print("seq_e after resizing:{}".format(seq_e.size()))
 
         hidden_tem = lstm(seq_e)
         hidden_tem = hidden_tem[0, :, :]
 
-        # print("hidden_tem:{}".format(hidden_tem.size()))
-
         hidden_tem = hidden_tem.view(bs, num_rel, self.embedding_dim)
-        # print("hidden_tem after resizing:{}".format(hidden_tem.size()))
-
-        # hidden_tem = hidden_tem[0, :, :]
+        
         rseq_e = hidden_tem
-
-        # rseq_e.unsqueeze_(2)
-        # print("rseq_e: {}\n".format(rseq_e.size()))
-
         return rseq_e
 
     def regularizer(self, s, r, o, reg_val=0):
@@ -1806,9 +1562,6 @@ class TA_distmult(torch.nn.Module):
         s_re = self.E_re(s)
         r_re = self.R_re(r)
         o_re = self.E_re(o)
-        # if reg_val:
-        # 	self.reg = reg_val
-        # print("CX reg", reg_val)
 
         if self.reg == 2:
             return (s_re ** 2 + o_re ** 2 + r_re ** 2 + s_im ** 2 + r_im ** 2 + o_im ** 2).sum()
@@ -1847,10 +1600,7 @@ class DE_SimplE(torch.nn.Module):
 
 
         entity_embedding_dim = int(self.embedding_dim/2)
-        # entity_embedding_dim = self.embedding_dim
 
-
-        #self.display_norms = display_norms
         self.E_s = torch.nn.Embedding(self.entity_count, entity_embedding_dim)
         self.E_o = torch.nn.Embedding(self.entity_count, entity_embedding_dim)
 
@@ -1885,11 +1635,6 @@ class DE_SimplE(torch.nn.Module):
         torch.nn.init.normal_(self.E_o.weight.data, 0, 0.05)
         torch.nn.init.normal_(self.R.weight.data, 0, 0.05)
         torch.nn.init.normal_(self.R_inv.weight.data, 0, 0.05)
-        
-        # torch.nn.init.xavier_uniform_(self.E_s.weight)
-        # torch.nn.init.xavier_uniform_(self.E_o.weight)
-        # torch.nn.init.xavier_uniform_(self.R.weight)
-        # torch.nn.init.xavier_uniform_(self.R_inv.weight)
 
         self.minimum_value = -self.embedding_dim*self.embedding_dim
         self.clamp_v = clamp_v
@@ -1925,7 +1670,6 @@ class DE_SimplE(torch.nn.Module):
             t_values = t_values.unsqueeze(1).unsqueeze(0)
             batch_size = len(s)
             t_values = t_values.repeat(batch_size,1,1)
-            # pdb.set_trace()
 
 
 
@@ -1948,8 +1692,6 @@ class DE_SimplE(torch.nn.Module):
         phi_e_s_t   = self.phi_s(o) if o is not None else self.phi_s.weight.unsqueeze(0)
         if 1:#try:
             ti_s_t      = amp_e_s_t * torch.sin(freq_e_s_t * t_values  + phi_e_s_t)
-        #except:
-        #    pdb.set_trace()
 
         amp_e_o_t   = self.amp_o(o) if o is not None else self.amp_o.weight.unsqueeze(0)
         freq_e_o_t  = self.freq_o(o) if o is not None else self.freq_o.weight.unsqueeze(0)
@@ -1964,12 +1706,10 @@ class DE_SimplE(torch.nn.Module):
         #'''
 
         try:
-            # pdb.set_trace()
             if s is None:
                 s_e_h = s_e_h.expand(ti_s_h.shape[0], -1, -1)
                 o_e_h = o_e_h.expand(ti_o_h.shape[0], -1, -1)
             if o is None:
-                # s_e_t
                 s_e_t = s_e_t.expand(ti_s_t.shape[0], -1, -1)
                 o_e_t = o_e_t.expand(ti_o_t.shape[0], -1, -1)
             elif t is None:
@@ -1984,12 +1724,6 @@ class DE_SimplE(torch.nn.Module):
             o_e_t_ti = torch.cat((o_e_t, ti_o_t), 2)   
             o_e_h_ti = torch.cat((o_e_h, ti_o_h), 2)   
 
-            # s_e_h_ti = s_e_h
-            # s_e_t_ti = s_e_t
-            # o_e_t_ti = o_e_t
-            # o_e_h_ti = o_e_h 
-
-
         except:
             pdb.set_trace()
 
@@ -1998,9 +1732,7 @@ class DE_SimplE(torch.nn.Module):
         result_inv = distmult_3way_simple(o_e_h_ti, r_e_inv, s_e_t_ti)
 
         score =  (result + result_inv)/2
-        # pdb.set_trace()
         score = torch.nn.functional.dropout(score, p=self.dropout, training=((s is not None) and (o is not None) and (t is not None)) )
-        # score = self.dropout_layer(score)
         return score
 
 
