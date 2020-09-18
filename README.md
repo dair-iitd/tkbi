@@ -3,7 +3,7 @@ This project contains Pytorch implementation of Temporal Knowledge Base Completi
 
 [1] "[Temporal Knowledge Base Completion: New Algorithms and Evaluation Protocols](https://arxiv.org/abs/2005.05035)" Jain, Prachi*, Sushant Rathi*, Mausam and Soumen Chakrabarti. EMNLP 2020.
 
-* equal contribution
+(* equal contribution)
 
 Updated version to be uploaded soon.
 
@@ -51,7 +51,7 @@ python  main.py -d YAGO11k -m TimePlex -a '{"embedding_dim":200, "model_path":".
 python main.py -d WIKIDATA12k -m TimePlex -a '{"embedding_dim":200, "model_path":"./models/wiki_timeplex_base/best_valid_model.pt", "recurrent_wt":5.0}' -l crossentropy_loss -r 0.1 -b 100 -x 300 -n 100 -v 1 -q 0 -y 40 -g_reg 2 -g 0.0 -bt 0 --patience 1 -e 2 --save_dir wiki_timeplex
 ```
 
-# Evaluating trained models(for link and time prediction)-
+# Evaluating trained models (for link and time prediction)-
 
 (Note: To evaluate TimePlex_base models, replace `-m TimePlex` with `-m TimePlex_base` and `--resume_from_save` argument to base model path, for example `--resume_from_save "./models/icews14_timeplex_base/best_valid_model.pt"`)
 
