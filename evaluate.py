@@ -14,7 +14,6 @@ from utils import func_load_to_gpu
 from analysis_helper import save_preds
 
 
-# time_index = {"t_r":0, "t_s":1,"t_e":2, "t_str":3, "t_i":4}
 time_index = {"t_s": 0, "t_s_orig": 1, "t_e": 2,
               "t_e_orig": 3, "t_str": 4, "t_i": 5}
 
@@ -26,7 +25,6 @@ class Ranker(object):
     from any scoring function/model from models.py
     """
 
-    # 'time-interval'):
     def __init__(self, scoring_function, all_kb, kb_data=None,
                  filter_method='time-interval', flag_additional_filter=True, expand_mode="None", load_to_gpu=True):
         """
@@ -58,8 +56,6 @@ class Ranker(object):
         print("building all known database from joint kb")
 
         print("Applying filter- {}".format(filter_method))
-        print(
-            "If using additional filter- {}".format(flag_additional_filter))
 
         self.filter_method = filter_method
         for fact in self.all_kb.facts:
@@ -129,35 +125,6 @@ class Ranker(object):
                 # knowns_t not being used!
                 self.knowns_t[sro].add(fact[3])
 
-            if flag_additional_filter:
-                ###
-                time_interval_str = self.all_kb.datamap.id2TimeStr[all_time[time_index["t_str"]]]
-                start, end = self.get_time_from_str(time_interval_str)
-                ###
-                if start == -1 and end == -1:
-                    continue
-                if not (start != -1 and end != -1):
-                    start = end = max(start, end)
-
-                tup = (fact[0], fact[1])
-                if tup not in self.knowns_t_e_o:  # knowns_t not being used!
-                    self.knowns_t_e_o[tup] = {}
-                if fact[2] not in self.knowns_t_e_o[tup]:
-                    self.knowns_t_e_o[tup][fact[2]] = set()
-                for tid in range(start, end + 1, 1):
-                    self.knowns_t_e_o[tup][fact[2]].add(
-                        (tid, (start, end)))
-
-                tup = (fact[2], fact[1])
-                if tup not in self.knowns_t_e_s:  # knowns_t not being used!
-                    self.knowns_t_e_s[tup] = {}
-                if fact[0] not in self.knowns_t_e_s[tup]:
-                    self.knowns_t_e_s[tup][fact[0]] = set()
-                for tid in range(start, end + 1, 1):
-                    self.knowns_t_e_s[tup][fact[0]].add(
-                        (tid, (start, end)))
-
-
         print("converting to lists")
         for k in self.knowns_o:
             self.knowns_o[k] = list(self.knowns_o[k])
@@ -177,81 +144,7 @@ class Ranker(object):
                 self.knowns_t_e_s[k][k2] = list(
                     self.knowns_t_e_s[k][k2])
 
-        # self.load_e1_filter_set()
-
         print("done")
-
-    def load_e1_filter_set(self):
-        # pickle_file='./stats/YAGO11k/valid_e1_rel_incompatible_list.pickle'
-        # pickle_file='./stats/YAGO11k/valid_e1_temp_diff_filter.pickle'
-        pickle_file = './stats/YAGO11k/valid_e1_temp_diff_filter_minsup10.pickle'
-
-        # pickle_file='./stats/WIKIDATA12k/valid_e1_temp_diff_filter.pickle'
-        # pickle_file='./stats/WIKIDATA12k/valid_e1_rel_incompatible_list.pickle'
-
-        print(
-            "Reading incompatible ent list (for e1) from {}".format(pickle_file))
-        with open(pickle_file, 'rb') as handle:
-            d = pickle.load(handle)
-            # print(d.keys())
-            # xx=input()
-            ent_incompat_list = d['ent_list']
-            # ent2id=d['ent_hyTE_id']
-
-        e1_incompat = []
-        for i in ent_incompat_list:
-            i_ids = []
-            for e in i:
-                i_ids.append(int(self.all_kb.datamap.entity_map[e]))
-            # if(len(i_ids)==0):
-            #     i_ids.append(oov_id) #default
-
-            e1_incompat.append(i_ids)
-
-        '''
-        pickle_file='./stats/YAGO11k/valid_e1_seen_list.pickle'
-        print("Reading seen ent list (for e1) from {}".format(pickle_file))
-        with open(pickle_file, 'rb') as handle:
-            d=pickle.load(handle)
-            ent_seen_list=d['ent_list']
-
-
-        for i in ent_seen_list:
-            i_ids=[]
-            for e in i:
-                # i_ids.append(int(self.all_kb.datamap.entity_map[str(ent2id[e])]))
-                i_ids.append(int(self.all_kb.datamap.entity_map[e]))
-
-            e1_incompat.append(i_ids)
-        '''
-
-        # list can't be empty
-        oov_id = len(self.all_kb.datamap.entity_map) - 1
-        for i in e1_incompat:
-            if len(i) == 0:
-                i.append(oov_id)
-
-        # padding so that it can be used as a tensor in scatter
-        lens = [len(x) for x in e1_incompat]
-        max_lens = max(lens)
-        e1_incompat = [numpy.pad(x, (0, max_lens - len(x)), 'edge')
-                       for x in e1_incompat]
-
-        self.e1_incompat = (numpy.array(e1_incompat))
-        print("e1_incompat length:", len(self.e1_incompat))
-
-        return
-
-    def get_time_from_str(self, time_interval_str):
-        start, end = time_interval_str.strip("").split("\t")
-        start = start.split("-")[0]
-        end = end.split("-")[0]
-        if start == "####" or len(
-                start) != 4 or re.search("#", start):
-            start = -1
-        if end == "####" or len(end) != 4 or re.search("#", end):
-            end = -1
-        return int(start), int(end)
 
     def get_knowns(self, e, r, t, flag_s_o=0, flag_r=0, flag_t=0):
         """
@@ -293,121 +186,8 @@ class Ranker(object):
                 ks = [self.knowns_s[(a, b, c)]
                       for a, b, c in zip(e, r, t)]
 
-        # raw filtering
-        '''
-        if flag_s_o:
-            ks = [self.knowns_o[(a, b)] for a,b in zip(e, r)]
-
-        else:
-            ks = [self.knowns_s[(a, b)] for a,b in zip(e, r)]
-
-        '''
-
         result = self.convert2numpy_array(ks)
         return result
-
-    def get_partial_knowns(self, e_in, r_in, t_in, flag_s_o=0):
-        """
-        returns all_knowns_t_e_ind (batch_sizexvariable_len), all_knowns_t_e_val (batch_sizexvariable_len)
-        where all_knowns_t_e_ind = indexes of entities for every fact (in a batch) which gets some partial rank (0 to 1)
-        all_knowns_t_e_val contains the corresponding entity's partial rank
-
-        partial rank is computed as follows
-        max(ranks_of_all_different_intervals)
-        rank of an interval = 1.0 - (num_time_pt_intersection/size_max_bounding_box_around_gold_seen_time)
-        Example: Gold fact: s,r,o, 1990-1995
-        seen facts=> s,r,o1, 1993-1997
-        rank_credit = 1.0 - (3/8) = 0.63
-        if there is another fact where o1 appears at a different time interval:
-        seen facts=> s,r,o1, 1989-1991
-        rank_credit = 1.0 - (2/7) = 0.71
-
-        final rank_credit o2 = max(0.63,0.71) = 0.71
-        """
-
-
-        # ipdb.set_trace()
-        all_knowns_t_e_ind, all_knowns_t_e_val = ([], [])
-        t_in = t_in.squeeze()
-        for e, r, t in zip(e_in, r_in, t_in):
-            
-            e, r = (e.item(), r.item())
-
-            relation_cnt = len(self.all_kb.datamap.relation_map)
-            # print("relation_cnt:", relation_cnt)
-            if r >= relation_cnt: # for inverse facts
-                r-=relation_cnt
-
-
-            time_interval_str = self.all_kb.datamap.id2TimeStr[t[time_index["t_str"]].item(
-            )]
-            gold_start, gold_end = self.get_time_from_str(
-                time_interval_str)
-
-            knowns_t_e_ind, knowns_t_e_val = ([], [])
-
-            ####---no partial credits if either or both times are missing---####
-            if gold_start == -1 or gold_end == -1:
-                all_knowns_t_e_ind.append([])
-                all_knowns_t_e_val.append([])
-                continue
-            ####-------------------------####
-            if 1:  # try:
-                if flag_s_o:
-                    e_t = self.knowns_t_e_o[(e, r)]
-                else:
-                    e_t = self.knowns_t_e_s[(e, r)]
-
-                for ent in e_t.keys():
-                    score = 0
-                    all_scores_ent = []
-                    prev_tup = ()
-                    start, end = (None, None)
-                    for time, tup in e_t[ent]:  # all_time:
-                        if not (time >= gold_start and time <= gold_end):
-                            continue
-                        if prev_tup != () and prev_tup != tup:
-                            iou_start = min(start, gold_start)
-                            iou_end = max(end, gold_end)
-                            all_scores_ent.append(
-                                (1.0 * score) / (iou_end - iou_start + 1))
-                            score = 0
-                        start, end = tup
-                        prev_tup = tup
-                        if time >= gold_start and time <= gold_end:
-                            score += 1
-
-                    if e_t[ent] and (score or len(all_scores_ent)):
-                        # print(start, gold_start, end, gold_end, all_scores_ent, score, e_t[ent])
-                        iou_start = min(start, gold_start)
-                        iou_end = max(end, gold_end)
-                        all_scores_ent.append(
-                            (1.0 * score) / (iou_end - iou_start + 1))
-                        ent_score = 1.0 - max(all_scores_ent)
-                        if len(e_t[ent]) > (e_t[ent][0][1]
-                                            [1] - e_t[ent][0][1][0] + 1):
-                            pass
-                            # print(e_t[ent], all_scores_ent, gold_start, gold_end)
-                            # x=input()
-                            # ipdb.set_trace()
-                    if score > 0:
-                        knowns_t_e_ind.append(ent)
-                        # 1.0-((1.0*score)/(end-start+1)))
-                        knowns_t_e_val.append(ent_score)
-            # except:
-            #     ipdb.set_trace()
-
-            all_knowns_t_e_ind.append(knowns_t_e_ind)
-            all_knowns_t_e_val.append(knowns_t_e_val)
-
-        assert len(all_knowns_t_e_ind) == len(e_in)
-
-        all_knowns_t_e_ind = self.convert2numpy_array(
-            all_knowns_t_e_ind)
-        all_knowns_t_e_val = self.convert2numpy_array(
-            all_knowns_t_e_val)
-
-        return all_knowns_t_e_ind, all_knowns_t_e_val
 
     def convert2numpy_array(self, list_of_list):
         lens = [len(x) for x in list_of_list]
@@ -416,10 +196,6 @@ class Ranker(object):
               for x in list_of_list]
         result = numpy.array(ks)
         return result
-
-    def test_hard_reflexive_constraint(
-            self, scores, s, minimum_value):
-        return scores.scatter_(1, s, minimum_value)
 
     def get_start_end_scores(self, s, r, o, t):
         '''
@@ -577,9 +353,6 @@ class Ranker(object):
                 else:
                     scores = self.scoring_function(s, r, None, t).data
 
-                # scores = self.test_hard_reflexive_constraint(scores,
-                # s, self.scoring_function.minimum_value) # making
-                # scores of all e2 same as e1 low
                 score_of_expected = scores.gather(1, o.data)
 
             else:
@@ -594,13 +367,9 @@ class Ranker(object):
                 else:
                     scores = self.scoring_function(None, r, o, t).data
 
-                # scores = self.test_hard_reflexive_constraint(scores,
-                # o, self.scoring_function.minimum_value) # making
-                # scores of all e1 same as e2 low
                 score_of_expected = scores.gather(1, s.data)
 
         # scores computed, now we need to filter out the correct entities (apart from gold)
-
         return scores, score_of_expected
 
 
@@ -710,34 +479,29 @@ class Ranker(object):
         if self.filter_method=='enumerate-time' and predict!='t':
             # get indices array with each index 
             # repeated time interval len number of times
+
             if self.load_to_gpu:
                 indices = self.get_indices_array(t.squeeze().cpu())
             else:
                 indices = self.get_indices_array(t.squeeze())
-
-            #indices = self.get_indices_array(t_ids.squeeze())
 
             scores_repeated = scores[indices]
             score_of_expected_repeated = score_of_expected[indices]
 
             scores_repeated.scatter_(1, knowns, self.scoring_function.minimum_value)
             if 'time_transE' in self.scoring_function.__class__.__name__:
-                # print("******TRANSE SCORE*******")
                 scores_repeated *= -1  # lower the better
                 score_of_expected_repeated *= -1
     
             greater = scores_repeated.ge(score_of_expected_repeated).float()
 
-            all_ranks = greater.sum(dim=1) + 1  # +equal.sum(dim=1)/2.0
-
-            # pdb.set_trace()
+            all_ranks = greater.sum(dim=1) + 1  
 
             # aggregate all_ranks by taking a mean of
             # reciprocal ranks (use index_add for this)
             num_samples = len(t)
 
             aggregate_type = 'mr' # 'mrr' or 'mr'
-            #aggregate_type = 'mrr' 
 
             if aggregate_type=='mrr':
                 all_ranks_inv = 1 / all_ranks
@@ -771,118 +535,14 @@ class Ranker(object):
 
         greater = scores.ge(score_of_expected).float()
 
-        if self.flag_additional_filter and predict!='t':
-            # partial filtering for time intervals
-            if predict=='o':#flag_s_o:
-                knowns_t_e_ind, knowns_t_e_val = self.get_partial_knowns(
-                    s, r, t, flag_s_o=1)
-            elif predict=='s':
-                knowns_t_e_ind, knowns_t_e_val = self.get_partial_knowns(
-                    o, r, t, flag_s_o=0)
-            else:
-                raise Exception()
-
-            for i in range(greater.shape[0]):
-                # before = torch.sum(greater[i])
-                greater[i][knowns_t_e_ind[i]] = greater[i][knowns_t_e_ind[i]] * \
-                                                func_load_to_gpu(torch.from_numpy(knowns_t_e_val[i]).type(
-                                                    'torch.FloatTensor'), self.load_to_gpu)#.cuda()
-
-        rank = greater.sum(dim=1) + 1  # +equal.sum(dim=1)/2.0
+        rank = greater.sum(dim=1) + 1  
 
         return rank
-
-
-    def forward_with_e1_temporal_filter(
-            self, s, r, o, t, knowns, start, end):
-        '''
-        filter e1 based on relation temporal constraint (hard)
-        start,end are indices for facts being evaluated currently
-        '''
-        scores = self.scoring_function(None, r, o, t).data
-
-        e1_incompat = self.e1_incompat[start:end]
-        e1_incompat = torch.from_numpy(e1_incompat).cuda()
-        # print(len(self.e1_incompat),e1_incompat.size(), scores.size(), start, end)
-        scores.scatter_(
-            1,
-            e1_incompat,
-            self.scoring_function.minimum_value)
-
-        score_of_expected = scores.gather(1, s.data)
-
-        scores.scatter_(
-            1, knowns, self.scoring_function.minimum_value)
-
-        # filtering based on relation temporal ordering constraint
-        # e1_incompat=self.e1_incompat[start:end]
-        # e1_incompat=torch.from_numpy(e1_incompat).cuda()
-        # scores.scatter_(1, e1_incompat, self.scoring_function.minimum_value)
-
-        if 'transE' in self.scoring_function.__class__.__name__:
-            # print("******TRANSE SCORE*******")
-            scores *= -1  # lower the better
-            score_of_expected *= -1
-
-        greater = scores.ge(score_of_expected).float()
-
-        rank = greater.sum(dim=1) + 1  # +equal.sum(dim=1)/2.0
-
-        return rank, scores, score_of_expected
 
     def func_load_to_gpu(self, data, load_to_gpu):
         if load_to_gpu:
             data = data.cuda()
         return data
-
-    # --IOU helper functions--#
-
-    def get_gold_year_interval(
-            self, t, id_year_map, load_to_gpu=True):
-        assert (t.shape[-1] == len(time_index))
-        t_str = t[:, :, time_index["t_str"]]
-
-        # ipdb.set_trace()
-
-        id2TimeStr = self.kb_data.datamap.id2TimeStr
-        t_gold_min = []
-        t_gold_max = []
-        # ipdb.set_trace()
-        for ele in t_str:
-            t_gold_min_ele, t_gold_max_ele = id2TimeStr[ele[0].item()].split(
-                "\t")
-            t_gold_min_ele = t_gold_min_ele.split("-")[0]
-            t_gold_max_ele = t_gold_max_ele.split("-")[0]
-
-            t_gold_min.append(t_gold_min_ele)
-            t_gold_max.append(t_gold_max_ele)
-
-        return t_gold_min, t_gold_max
-
-    def prepare_data_iou_scores(
-            self, t, scores_t="", load_to_gpu=True):
-        ##
-        # ipdb.set_trace()
-        if not self.kb_data.datamap.use_time_interval:
-            id_year_map = self.func_load_to_gpu(torch.from_numpy(
-                self.kb_data.datamap.id2dateYear_mat), load_to_gpu)
-        else:
-            id_year_map = self.func_load_to_gpu(torch.from_numpy(
-                self.kb_data.datamap.binId2year_mat), load_to_gpu)
-        ##
-
-        # ---final IOU score computation, extract gold time intervals from KB first---#
-
-        t_gold_min, t_gold_max = self.get_gold_year_interval(
-            t, id_year_map, load_to_gpu=load_to_gpu)
-        # ------------------------------------------#
-
-        out_dict = {"scores_t": scores_t, "gold": (t_gold_min, t_gold_max), "map": id_year_map,
-                    "use_time_interval": self.kb_data.datamap.use_time_interval,
-                    "facts": self.kb_data.facts, "data_folder_full_path": self.kb_data.datamap.dataset_root}
-
-        return out_dict
-    # -------------------------#
 
     # ---helper functions for the new filtering --#
     def get_indices_array(self, t):
@@ -911,7 +571,7 @@ class Ranker(object):
 
 
 def evaluate(name, ranker, kb, batch_size, predict_time=0, predict_time_pair=0, predict_rel=0, verbose=0,
-             hooks=None, save_text=None, load_to_gpu=True, flag_add_reverse=0):  # True):
+             hooks=None, save_text=None, load_to_gpu=True, flag_add_reverse=0):  
     """
     Evaluates an entity ranker on a knowledge base, by computing mean reverse rank, mean rank, hits 10 etc\n
     Can also print type prediction score with higher verbosity.\n
@@ -1021,7 +681,7 @@ def evaluate(name, ranker, kb, batch_size, predict_time=0, predict_time_pair=0, 
             totals['r']['hits10'] += ranks_r.le(11).float().sum()
             totals['r']['hits1'] += ranks_r.eq(1).float().sum()
 
-        if predict_time_pair:  # and not kb.use_time_interval:
+        if predict_time_pair:  
             if ranker.expand_mode == "start-end-diff-relation":
                 score_from_model = ranker.get_start_end_time_scores(
                     s, r, o)
