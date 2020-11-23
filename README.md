@@ -13,6 +13,8 @@ python>=3.6
 pytorch==1.0.0
 ```
 
+#Dataset
+Download the dataset from [here](https://zenodo.org/record/4286007#.X7uL8BMzYWo).
 
 # Training commands-
 
