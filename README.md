@@ -14,7 +14,15 @@ pytorch==1.0.0
 ```
 
 # Dataset
-Download the dataset from [here](https://zenodo.org/record/4286007#.X7uL8BMzYWo).
+Download the dataset from [here](https://zenodo.org/record/4286007#.X7uL8BMzYWo).  
+
+Commands-  
+```
+# Run from inside the repo dir
+wget -O datasets.zip https://zenodo.org/record/4286007/files/share-tkbc-data.zip?download=1
+unzip datasets.zip && mv share data
+```
+
 
 # Training commands-
 
