@@ -1056,7 +1056,7 @@ def evaluate(name, ranker, kb, batch_size, predict_time=0, predict_time_pair=0, 
 
             totals['r']['mr'] += ranks_r.sum()
             totals['r']['mrr'] += (1.0 / ranks_r).sum()
-            totals['r']['hits10'] += ranks_r.le(11).float().sum()
+            totals['r']['hits10'] += ranks_r.le(10).float().sum()
             totals['r']['hits1'] += ranks_r.eq(1).float().sum()
 
         if predict_time_pair:  # and not kb.use_time_interval:
@@ -1073,19 +1073,19 @@ def evaluate(name, ranker, kb, batch_size, predict_time=0, predict_time_pair=0, 
         # e1,r,?
         totals['e2']['mr'] += ranks_o.sum()
         totals['e2']['mrr'] += (1.0 / ranks_o).sum()
-        totals['e2']['hits10'] += ranks_o.le(11).float().sum()
+        totals['e2']['hits10'] += ranks_o.le(10).float().sum()
         totals['e2']['hits1'] += ranks_o.eq(1).float().sum()
         # ?,r,e2
         totals['e1']['mr'] += ranks_s.sum()
         totals['e1']['mrr'] += (1.0 / ranks_s).sum()
-        totals['e1']['hits10'] += ranks_s.le(11).float().sum()
+        totals['e1']['hits10'] += ranks_s.le(10).float().sum()
         totals['e1']['hits1'] += ranks_s.eq(1).float().sum()
 
         totals['m']['mr'] += (ranks_s.sum() + ranks_o.sum()) / 2.0
         totals['m']['mrr'] += ((1.0 / ranks_s).sum() +
                                (1.0 / ranks_o).sum()) / 2.0
-        totals['m']['hits10'] += (ranks_s.le(11).float().sum() +
-                                  ranks_o.le(11).float().sum()) / 2.0
+        totals['m']['hits10'] += (ranks_s.le(10).float().sum() +
+                                  ranks_o.le(10).float().sum()) / 2.0
         totals['m']['hits1'] += (ranks_s.eq(1).float().sum() +
                                  ranks_o.eq(1).float().sum()) / 2.0
 
