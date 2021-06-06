@@ -93,8 +93,8 @@ Link Prediction scores (2k dim model):
 |      Dataset     | Wikidata12k |        |         | Yago11k |        |         | ICEWS05-15 |        |         | ICEWS14 |        |         |
 |:----------------:|:-----------:|:------:|:-------:|:-------:|:------:|:-------:|:----------:|:------:|:-------:|:-------:|:------:|:-------:|
 | Methods (2k dim) |     MRR     | HITS@1 | HITS@10 |   MRR   | HITS@1 | HITS@10 |     MRR    | HITS@1 | HITS@10 |   MRR   | HITS@1 | HITS@10 |
-|  TIMEPLEX (BASE) |    32.68    |  22.03 |  53.57  |  18.93  |  11.58 |  32.40  |    66.14   |  57.07 |  83.07  |  62.00  |  53.49 |  78.16  |
-|     TIMEPLEX     |    33.82    |  22.92 |  54.48  |  23.28  |  16.33 |  36.86  |    66.18   |  57.07 |  83.13  |  62.02  |  53.54 |  78.16  |
+|  TIMEPLEX (BASE) |    32.68    |  22.03 |  52.52  |  18.93  |  11.58 |  31.52  |    66.14   |  57.07 |  82.4  |  62.00  |  53.49 |  77.48  |
+|     TIMEPLEX     |    33.82    |  22.92 |  53.37  |  23.28  |  16.33 |  36.2  |    66.18   |  57.07 |  82.49  |  62.02  |  53.54 |  77.51  |
 
 Time-interval prediction scores:
 ![Image-time-interval-prediction-performance](https://github.com/dair-iitd/tkbi/blob/master/images/Time_scores.png?raw=true)
