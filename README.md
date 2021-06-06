@@ -87,7 +87,7 @@ python main.py -d icews14 -m TimePlex --resume_from_save "./models/icews14_timep
 
 # Results
 Link Prediction scores:
-![Image-link-prediction-performance](https://github.com/dair-iitd/tkbi/blob/master/images/Link_scores.png?raw=true)
+![image](https://user-images.githubusercontent.com/20418382/120938804-5eefd400-c732-11eb-8a3b-91932d31d8af.png)
 Link Prediction scores (2k dim model):
 
 |      Dataset     | Wikidata12k |        |         | Yago11k |        |         | ICEWS05-15 |        |         | ICEWS14 |        |         |
