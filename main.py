@@ -1,3 +1,4 @@
+from copyreg import constructor
 import kb
 import data_loader
 import trainer
@@ -15,6 +16,7 @@ import re
 import pdb
 import numpy as np
 import torch
+import ast
 
 from time_prediction.evaluate import evaluate as time_evaluate
 import evaluate
@@ -71,6 +73,7 @@ def init_model(model_name, model_arguments, datamap, ktrain, eval_batch_size, fl
     if model_name in ['TimePlex']:
         model_arguments['train_kb'] = ktrain
         model_arguments['eval_batch_size'] = eval_batch_size
+
 
 
     # if model_name.startswith('time_order_constraint'):
@@ -352,7 +355,8 @@ if __name__ == "__main__":
     parser.add_argument('--data_repository_root', required=False, default='data')
 
     # --arguments for mode = train only -- #
-    parser.add_argument('-a', '--model_arguments', help="model arguments as in __init__ of "
+    parser.add_argument('-a', '--model_arguments', type=str, 
+                        help="model arguments as in __init__ of "
                                                         "model (Excluding entity and relation count), embedding_dim "
                                                         "argument required for training. "
                                                         "This is a json string", required=False)
@@ -448,7 +452,7 @@ if __name__ == "__main__":
     # ------------------------------------------- #
 
     if arguments.mode == 'train':
-        arguments.model_arguments = json.loads(arguments.model_arguments)
+        arguments.model_arguments = ast.literal_eval( str(arguments.model_arguments) )
 
         if arguments.save_dir is None:
             arguments.save_dir = os.path.join("logs", "%s_%s_%s_run_on_%s_starting_from_%s" % (arguments.model,
@@ -467,7 +471,7 @@ if __name__ == "__main__":
                 os.makedirs(arguments.save_dir)
             else:
                 utils.colored_print("yellow", "directory %s already exists" % arguments.save_dir)
-            utils.duplicate_stdout(os.path.join(arguments.save_dir, "log.txt"))
+            #utils.duplicate_stdout(os.path.join(arguments.save_dir, "log.txt"))
 
         if arguments.tflogs_dir is None:
             arguments.tflogs_dir = arguments.save_dir

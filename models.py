@@ -858,9 +858,7 @@ class TimePlex(torch.nn.Module):
         # else:
         #     self.base_model = TimePlex_base(entity_count, 2*relation_count, timeInterval_count,
         #                                                     embedding_dim, reg=reg, srt_wt=srt_wt, ort_wt=ort_wt, sot_wt=sot_wt)
-
-
-
+        print("PATH ", recurrent_args)
 
         # --Load pretrained TimePlex(base) embeddings--#
         if model_path != "":

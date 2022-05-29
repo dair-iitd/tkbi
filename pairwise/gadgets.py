@@ -171,7 +171,7 @@ class Gadget(torch.nn.Module):
         # index i is repeated num_neighbours[i] times (call it 'indices')
         # higher versions of pytorch (>=1.2) have a
         # repeat_interleave method for this
-        entity_degrees = degrees[entities]
+        entity_degrees = degrees[entities.long()]
         if filter is not None:
             entity_degrees -= 1  # positive sample filtered for each entity, hence reduce degree by 1
 
@@ -624,6 +624,7 @@ class Recurrent(Gadget):
 
 
         # use indices to repeat t and r appropriate number of times
+        indices = indices.long()
         t_repeated = t[indices]  # torch.index_select(t, 0, indices)
         r_repeated = r[indices]  # torch.index_select(r, 0, indices)
         e_repeated = nbors[indices]  # torch.index_select(r, 0, indices)

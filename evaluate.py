@@ -716,7 +716,7 @@ class Ranker(object):
                 indices = self.get_indices_array(t.squeeze())
 
             #indices = self.get_indices_array(t_ids.squeeze())
-
+            indices = indices.long()
             scores_repeated = scores[indices]
             score_of_expected_repeated = score_of_expected[indices]
 
